@@ -11,6 +11,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MaMa.HFT.Console.GlobalShared
 {
@@ -20,6 +21,7 @@ namespace MaMa.HFT.Console.GlobalShared
         public BinanceSocketClient socketClient = new BinanceSocketClient();
         private CancellationToken token;
         decimal CurrentCumulativeDelta = 0;
+        public BookSnap BookSnapshot = new BookSnap();
 
         protected readonly Logger Logger;
         public bool IsAllowedIntoRange = false;
@@ -97,36 +99,36 @@ namespace MaMa.HFT.Console.GlobalShared
         {
             var BestAsk = (List<BinanceOrderBookEntry>)obj.Asks;
             var BestBid = (List<BinanceOrderBookEntry>)obj.Bids;
+            var Capture = BestAsk.ConvertToBook(BestBid);
+            Capture.Compute();
+            BookSnapshot.AddBook(Capture);
 
-            var CumuluatedSellerOnHotRange = BestAsk.Sum(y => y.Quantity);
-            var CumuluatedBuyerOnHotRange = BestBid.Sum(y => y.Quantity);
-
-            var BestLiquidAsk = BestAsk.OrderBy(a => a.Quantity).First().Price;
-            var BestLiquidBid = BestBid.OrderBy(a => a.Quantity).First().Price;
-
-
-            BookEntry Entry = new BookEntry(BestAsk[0].Price, BestBid[0].Price, obj.LastUpdateId);
+            //BookEntry Entry = new BookEntry(BestAsk[0].Price, BestBid[0].Price, obj.LastUpdateId);
 
 
-            Logger.Info(string.Format("Spread : {0}", Entry.PriceSpread));
-            Logger.Info(string.Format("MediumPrice : {0}", Entry.MediumPrice));
-            Logger.Info(string.Format("Ask : {0}", Entry.Ask));
-            Logger.Info(string.Format("CumuluatedBuyerOnHotRange : {0}", CumuluatedBuyerOnHotRange));
-            Logger.Info(string.Format("BestLiquidAsk : {0}", BestLiquidAsk));
+            //Logger.Info(string.Format("Spread : {0}", Entry.PriceSpread));
+            //Logger.Info(string.Format("MediumPrice : {0}", Entry.MediumPrice));
+            //Logger.Info(string.Format("Ask : {0}", Entry.Ask));
+            //Logger.Info(string.Format("CumuluatedBuyerOnHotRange : {0}", CumuluatedBuyerOnHotRange));
+            //Logger.Info(string.Format("BestLiquidAsk : {0}", BestLiquidAsk));
 
-            Logger.Info(string.Format("Bid : {0}", Entry.Bid));
-            Logger.Info(string.Format("CumuluatedSellerOnHotRange : {0}", CumuluatedSellerOnHotRange));
-            Logger.Info(string.Format("BestLiquidBid : {0}", BestLiquidBid));
+            //Logger.Info(string.Format("Bid : {0}", Entry.Bid));
+            //Logger.Info(string.Format("CumuluatedSellerOnHotRange : {0}", CumuluatedSellerOnHotRange));
+            //Logger.Info(string.Format("BestLiquidBid : {0}", BestLiquidBid));
 
-            //if(Entry.PriceSpread > 1 )
+
+
+            //if (WANTTOBUY)
             //{
-            //    this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Sell);
-            //    this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Buy, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Bid, 2));
-            //}
-            //if (Entry.NegativeSpread < -1)
-            //{
-            //    this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Buy);
-            //    this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Sell, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Ask, 2));
+            //    Task.Run(() =>
+            //    {
+            //        this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Buy);
+            //        //this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Sell);
+
+            //        this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Buy, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Bid, 3));
+            //        //this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Sell, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Ask, 2));
+
+            //    });
             //}
 
         }
@@ -157,13 +159,21 @@ namespace MaMa.HFT.Console.GlobalShared
         public void RemoveAllDirectionOrder(OrderSide direction)
         {
 
-            var CurrentOrder = client.GetOpenOrders(PairLink);
-            foreach(var order in CurrentOrder.Data)
+            try
             {
-                if(order.Side == direction && order.Symbol == PairLink)
+                var CurrentOrder = client.GetOpenOrders(PairLink);
+                foreach (var order in CurrentOrder.Data)
                 {
-                    client.CancelOrder(PairLink,order.OrderId);
+                    if (order.Side == direction && order.Symbol == PairLink)
+                    {
+                        client.CancelOrder(PairLink, order.OrderId);
+                    }
                 }
+
+            }
+            catch
+            {
+
             }
 
 
@@ -195,16 +205,16 @@ namespace MaMa.HFT.Console.GlobalShared
             switch (obj.Status)
             {
                 case OrderStatus.Filled:
-                    if (obj.Side == OrderSide.Buy)
-                    {
-                        this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Sell);
+                    //if (obj.Side == OrderSide.Buy)
+                    //{
+                    //    this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Sell);
 
-                    }
-                    if (obj.Side == OrderSide.Sell)
-                    {
-                        this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Buy);
+                    //}
+                    //if (obj.Side == OrderSide.Sell)
+                    //{
+                    //    this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Buy);
 
-                    }
+                    //}
                     break;
                     Logger.Info(string.Format("TransactionTime received for : {0}", obj.Status));
                     Logger.Info(string.Format("ListOrderStatus received for : {0}", obj.Quantity));

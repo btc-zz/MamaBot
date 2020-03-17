@@ -4,8 +4,12 @@ using System.Text;
 
 namespace Bot.DataProvider
 {
-    class BookEntry
+    public class BookEntry
     {
+            public BookEntry()
+            {
+
+            }
             public BookEntry(decimal ask, decimal bid, long updateTime)
             {
                 if (updateTime <= 0)
