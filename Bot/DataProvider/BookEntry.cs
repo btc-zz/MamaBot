@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Bot.DataProvider
 {
-    public class BookEntry
+    public class BookSpread
     {
-            public BookEntry()
+            public BookSpread()
             {
 
             }
-            public BookEntry(decimal ask, decimal bid, long updateTime)
+            public BookSpread(decimal ask, decimal bid, long updateTime)
             {
                 if (updateTime <= 0)
                     throw new ArgumentOutOfRangeException(nameof(updateTime));
