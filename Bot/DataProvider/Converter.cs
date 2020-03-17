@@ -7,9 +7,9 @@ namespace Bot.DataProvider
 {
     public static class Converter
     {
-        public static Book ConvertToBook(this List<BinanceOrderBookEntry> Asks, List<BinanceOrderBookEntry> Bids)
+        public static OrderBook ConvertToBook(this List<BinanceOrderBookEntry> Asks, List<BinanceOrderBookEntry> Bids)
         {
-            Book test = new Book();
+            OrderBook test = new OrderBook();
             for (int IndexOfEntry = 0; IndexOfEntry < Asks.Count; IndexOfEntry++)
             {
                 test.Asks.Add(new SimpleBookEntry(Asks[IndexOfEntry].Price, Asks[IndexOfEntry].Quantity));

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Bot.DataProvider
 {
-    public class Book
+    public class OrderBook
     {
         public List<SimpleBookEntry> Asks { get; set; } = new List<SimpleBookEntry>();
         public List<SimpleBookEntry> Bids { get; set; } = new List<SimpleBookEntry>();
@@ -16,11 +16,11 @@ namespace Bot.DataProvider
         public decimal BestLiquidBid { get; set; }
 
         public DateTime CreationDate { get; set; } = DateTime.Now;
-        public Book()
+        public OrderBook()
         {
 
         }
-        public Book(List<SimpleBookEntry> InAsk, List<SimpleBookEntry> InBid)
+        public OrderBook(List<SimpleBookEntry> InAsk, List<SimpleBookEntry> InBid)
         {
             this.Asks = InAsk;
             this.Bids = InBid;
@@ -38,12 +38,12 @@ namespace Bot.DataProvider
 
     public class BookSnap
     {
-        public List<Book> OrderBookSnap = new List<Book>();
+        public List<OrderBook> OrderBookSnap = new List<OrderBook>();
         public BookSnap()
         {
 
         }
-        public void AddBook(Book DataIn)
+        public void AddBook(OrderBook DataIn)
         {
             OrderBookSnap.Add(DataIn);
         }
