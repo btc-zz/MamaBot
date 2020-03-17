@@ -43,6 +43,8 @@ namespace Bot.DataProvider
         {
 
         }
+
+
         public void AddBook(OrderBook DataIn)
         {
             OrderBookSnap.Add(DataIn);

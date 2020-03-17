@@ -24,7 +24,6 @@ namespace MaMa.HFT.Console.GlobalShared
         public BookSnap BookSnapshot = new BookSnap();
 
         protected readonly Logger Logger;
-        public bool IsAllowedIntoRange = false;
         public string PairLink { get; set; }
         public string ListenerKey { get; set; }
         public Instance(string pair,string api,string apisec)
@@ -91,17 +90,28 @@ namespace MaMa.HFT.Console.GlobalShared
             //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
             //socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
             //socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
-            socketClient.SubscribeToPartialOrderBookUpdates(PairLink,5, 100, TT6);
+            socketClient.SubscribeToPartialOrderBookUpdates(PairLink,5, 100, OrderBookHandler);
 
         }
 
-        private void TT6(BinanceOrderBook obj)
+        private void OrderBookHandler(BinanceOrderBook obj)
         {
             var BestAsk = (List<BinanceOrderBookEntry>)obj.Asks;
             var BestBid = (List<BinanceOrderBookEntry>)obj.Bids;
             var Capture = BestAsk.ConvertToBook(BestBid);
             Capture.Compute();
             BookSnapshot.AddBook(Capture);
+
+            var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 2)).ToList().ToList();
+            var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 2)).ToList().ToList();
+
+            var RounderBid = BestBid.Select(y => Math.Round(y.Price, 2)).ToList().ToList();
+            var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 2)).ToList().ToList();
+
+            //Extract Average volume Per Price;
+
+
+
 
             //BookEntry Entry = new BookEntry(BestAsk[0].Price, BestBid[0].Price, obj.LastUpdateId);
 
