@@ -101,6 +101,9 @@ namespace MaMa.HFT.Console.GlobalShared
             var CumuluatedBuyerOnHotRange = BestAsk.Sum(y => y.Quantity);
             var CumuluatedSellerOnHotRange = BestBid.Sum(y => y.Quantity);
 
+            var BestLiquidAsk = BestAsk.OrderBy(a => a.Quantity).First().Price;
+            var BestLiquidBid = BestBid.OrderBy(a => a.Quantity).First().Price;
+
 
             BookEntry Entry = new BookEntry(BestAsk[0].Price, BestBid[0].Price, obj.LastUpdateId);
 
@@ -109,9 +112,11 @@ namespace MaMa.HFT.Console.GlobalShared
             Logger.Info(string.Format("MediumPrice : {0}", Entry.MediumPrice));
             Logger.Info(string.Format("Ask : {0}", Entry.Ask));
             Logger.Info(string.Format("CumuluatedBuyerOnHotRange : {0}", CumuluatedBuyerOnHotRange));
+            Logger.Info(string.Format("BestLiquidAsk : {0}", BestLiquidAsk));
 
             Logger.Info(string.Format("Bid : {0}", Entry.Bid));
             Logger.Info(string.Format("CumuluatedSellerOnHotRange : {0}", CumuluatedSellerOnHotRange));
+            Logger.Info(string.Format("BestLiquidBid : {0}", BestLiquidBid));
 
             //if(Entry.PriceSpread > 1 )
             //{
