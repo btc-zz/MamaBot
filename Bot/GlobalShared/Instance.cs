@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Linq;
 
 namespace MaMa.HFT.Console.GlobalShared
 {
@@ -97,24 +98,31 @@ namespace MaMa.HFT.Console.GlobalShared
             var BestAsk = (List<BinanceOrderBookEntry>)obj.Asks;
             var BestBid = (List<BinanceOrderBookEntry>)obj.Bids;
 
+            var CumuluatedBuyerOnHotRange = BestAsk.Sum(y => y.Quantity);
+            var CumuluatedSellerOnHotRange = BestBid.Sum(y => y.Quantity);
+
+
             BookEntry Entry = new BookEntry(BestAsk[0].Price, BestBid[0].Price, obj.LastUpdateId);
 
 
             Logger.Info(string.Format("Spread : {0}", Entry.PriceSpread));
             Logger.Info(string.Format("MediumPrice : {0}", Entry.MediumPrice));
             Logger.Info(string.Format("Ask : {0}", Entry.Ask));
-            Logger.Info(string.Format("Bid : {0}", Entry.Bid));
+            Logger.Info(string.Format("CumuluatedBuyerOnHotRange : {0}", CumuluatedBuyerOnHotRange));
 
-            if(Entry.PriceSpread > 1)
-            {
-                this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Sell);
-                this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Buy, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Bid, 2));
-            }
-            if (Entry.NegativeSpread < -1)
-            {
-                this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Buy);
-                this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Sell, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Ask, 2));
-            }
+            Logger.Info(string.Format("Bid : {0}", Entry.Bid));
+            Logger.Info(string.Format("CumuluatedSellerOnHotRange : {0}", CumuluatedSellerOnHotRange));
+
+            //if(Entry.PriceSpread > 1 )
+            //{
+            //    this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Sell);
+            //    this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Buy, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Bid, 2));
+            //}
+            //if (Entry.NegativeSpread < -1)
+            //{
+            //    this.RemoveAllDirectionOrder(Binance.Net.Objects.OrderSide.Buy);
+            //    this.PlaceOrder("BTCUSDT", Binance.Net.Objects.OrderSide.Sell, Binance.Net.Objects.OrderType.Limit, decimal.Round(.0022m, 4), decimal.Round(Entry.Ask, 2));
+            //}
 
         }
 
