@@ -8,6 +8,7 @@ namespace MamaBot.GlobalShared
     {
         public static string BinanceApiKey = Environment.GetEnvironmentVariable("ApiKey", EnvironmentVariableTarget.User);
         public static string BinanceApiSecret = Environment.GetEnvironmentVariable("ApiSecret", EnvironmentVariableTarget.User);
+        public static bool ShowOrderErrors = false;
 
 
     }

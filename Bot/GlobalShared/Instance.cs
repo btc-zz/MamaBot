@@ -3,6 +3,7 @@ using Binance.Net.Objects;
 using Bot.DataProvider;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Logging;
+using MamaBot.GlobalShared;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -69,14 +70,13 @@ namespace MaMa.HFT.Console.GlobalShared
         {
 
             var orderResult = client.PlaceOrder(PairLink, side, type, quantity, null, null, price, TimeInForce.GoodTillCancel, null, null, null, null, token);
-            if(orderResult.Error != null)
+            if(orderResult.Error != null && Vars.ShowOrderErrors)
             {
                 Logger.Error(string.Format("Order not executed due to : {0}", orderResult.Error.Message));
 
             }
             else
             {
-                Logger.Info(string.Format("Order not executed due to : {0}", orderResult.Data.Status));
 
             }
 
