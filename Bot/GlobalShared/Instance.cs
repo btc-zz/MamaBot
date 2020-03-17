@@ -88,7 +88,7 @@ namespace MaMa.HFT.Console.GlobalShared
         public void ObSub()
         {
             //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
-            //socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
+            socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
             //socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
             socketClient.SubscribeToPartialOrderBookUpdates(PairLink,5, 100, OrderBookHandler);
 
@@ -107,6 +107,13 @@ namespace MaMa.HFT.Console.GlobalShared
 
             var RounderBid = BestBid.Select(y => Math.Round(y.Price, 2)).ToList().ToList();
             var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 2)).ToList().ToList();
+            CurrentCumulativeDelta += RounderAskVol.First();
+            CurrentCumulativeDelta -= RounderBidVol.First();
+            Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
+
+            Logger.Info(string.Format("RounderAskVol : {0}", RounderAskVol.First()));
+            Logger.Info(string.Format("RounderBidVol : {0}", RounderBidVol.First()));
+
 
             //Extract Average volume Per Price;
 
