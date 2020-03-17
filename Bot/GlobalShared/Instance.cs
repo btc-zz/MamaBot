@@ -98,8 +98,8 @@ namespace MaMa.HFT.Console.GlobalShared
             var BestAsk = (List<BinanceOrderBookEntry>)obj.Asks;
             var BestBid = (List<BinanceOrderBookEntry>)obj.Bids;
 
-            var CumuluatedBuyerOnHotRange = BestAsk.Sum(y => y.Quantity);
-            var CumuluatedSellerOnHotRange = BestBid.Sum(y => y.Quantity);
+            var CumuluatedSellerOnHotRange = BestAsk.Sum(y => y.Quantity);
+            var CumuluatedBuyerOnHotRange = BestBid.Sum(y => y.Quantity);
 
             var BestLiquidAsk = BestAsk.OrderBy(a => a.Quantity).First().Price;
             var BestLiquidBid = BestBid.OrderBy(a => a.Quantity).First().Price;
