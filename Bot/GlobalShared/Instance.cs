@@ -22,7 +22,7 @@ namespace MaMa.HFT.Console.GlobalShared
         private CancellationToken token;
         decimal CurrentCumulativeDelta = 0;
         public BookSnap BookSnapshot = new BookSnap();
-
+        public PriceMap Map = new PriceMap();
         protected readonly Logger Logger;
         public string PairLink { get; set; }
         public string ListenerKey { get; set; }
@@ -102,17 +102,31 @@ namespace MaMa.HFT.Console.GlobalShared
             Capture.Compute();
             BookSnapshot.AddBook(Capture);
 
-            var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 4)).ToList().ToList();
+            var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
             var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 4)).ToList().ToList();
 
-            var RounderBid = BestBid.Select(y => Math.Round(y.Price, 4)).ToList().ToList();
+            var RounderBid = BestBid.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
             var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 4)).ToList().ToList();
+
+            for(int i = 0;i < RounderAsk.Count; i++)
+            {
+                Map.AddPrice(new PriceLayer(RounderAsk[i], RounderAskVol[i], PriceDirection.Ask));
+            }
+            for (int i = 0; i < RounderBid.Count; i++)
+            {
+                Map.AddPrice(new PriceLayer(RounderBid[i], RounderBidVol[i], PriceDirection.Bid));
+            }
+
+            //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), decimal.MinusOne,false,true));
+            //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), null, true, false));
+
             CurrentCumulativeDelta += RounderAskVol.First();
             CurrentCumulativeDelta -= RounderBidVol.First();
-            Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
+            
+            //Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
 
-            Logger.Info(string.Format("RounderAskVol : {0}", RounderAskVol.First()));
-            Logger.Info(string.Format("RounderBidVol : {0}", RounderBidVol.First()));
+            //Logger.Info(string.Format("RounderAskVol : {0}", RounderAskVol.First()));
+            //Logger.Info(string.Format("RounderBidVol : {0}", RounderBidVol.First()));
 
 
             //Extract Average volume Per Price;
