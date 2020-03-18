@@ -22,6 +22,7 @@ namespace MaMa.HFT.Console.GlobalShared
         private CancellationToken token;
         decimal CurrentCumulativeDelta = 0;
         public BookSnap BookSnapshot = new BookSnap();
+        public PriceMapSnap MapHistory = new PriceMapSnap();
         public PriceMap Map = new PriceMap();
         protected readonly Logger Logger;
         public string PairLink { get; set; }
@@ -103,10 +104,10 @@ namespace MaMa.HFT.Console.GlobalShared
             BookSnapshot.AddBook(Capture);
 
             var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
-            var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 4)).ToList().ToList();
+            var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 5)).ToList().ToList();
 
             var RounderBid = BestBid.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
-            var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 4)).ToList().ToList();
+            var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 5)).ToList().ToList();
 
             for(int i = 0;i < RounderAsk.Count; i++)
             {
@@ -116,6 +117,9 @@ namespace MaMa.HFT.Console.GlobalShared
             {
                 Map.AddPrice(new PriceLayer(RounderBid[i], RounderBidVol[i], PriceDirection.Bid));
             }
+            Logger.Info(string.Format("Price : {0}", Map.Map.Last().Price));
+            Logger.Info(string.Format("Ask Quantity Wall : {0}", Map.Map.Last().AskQuantity));
+            Logger.Info(string.Format("Bid Quantity Wall : {0}", Map.Map.Last().BidQuantity));
 
             //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), decimal.MinusOne,false,true));
             //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), null, true, false));
@@ -184,7 +188,8 @@ namespace MaMa.HFT.Console.GlobalShared
             //CurrentCumulativeDelta = (obj.Data.Volume - obj.Data.TakerBuyQuoteAssetVolume);
             //Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
             //Logger.Info(string.Format("VOL : {0}", obj.Data.Volume));
-            if (obj.Data.Final) { CurrentCumulativeDelta = 0; }
+            if (obj.Data.Final) { CurrentCumulativeDelta = 0; MapHistory.AddMap(Map); ; Map.Clear();
+            }
         }
 
         public void RemoveAllDirectionOrder(OrderSide direction)

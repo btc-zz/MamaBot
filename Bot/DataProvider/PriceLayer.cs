@@ -14,8 +14,12 @@ namespace Bot.DataProvider
         {
 
         }
+        public void Clear() { this.Map.Clear(); }
         public void AddPrice(PriceLayer PriceToAdd)
         {
+            //Implement level change Class
+
+
             var PriceFound = this.Map.Count > 0 ? this.Map.Find(y => y.Price == PriceToAdd.Price) : null;
             if (PriceFound != null)
             {
@@ -23,19 +27,34 @@ namespace Bot.DataProvider
                 else {
                     PriceFound.BidQuantity += PriceToAdd.BidQuantity; }
                 this.Map.Remove(PriceFound);
-                Console.WriteLine("Price : {0}", PriceFound.Price);
-                Console.WriteLine("AskQ : {0}", PriceFound.AskQuantity);
-                Console.WriteLine("BidQ : {0}", PriceFound.BidQuantity);
                 this.Map.Add(PriceFound);
             }
             else
             {
                 this.Map.Add(PriceToAdd);
             }
+            
+
 
 
         }
     }
+    public class PriceMapSnap
+    {
+
+        public List<PriceMap> SnapMap { get; set; } = new List<PriceMap>();
+        public PriceMapSnap()
+        {
+
+        }
+        public void AddMap(PriceMap PriceToAdd)
+        {
+
+            this.SnapMap.Add(PriceToAdd);
+
+        }
+    }
+
     public enum PriceDirection
     {
         Ask, Bid
