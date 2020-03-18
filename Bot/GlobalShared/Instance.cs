@@ -102,11 +102,11 @@ namespace MaMa.HFT.Console.GlobalShared
             Capture.Compute();
             BookSnapshot.AddBook(Capture);
 
-            var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 2)).ToList().ToList();
-            var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 2)).ToList().ToList();
+            var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 4)).ToList().ToList();
+            var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 4)).ToList().ToList();
 
-            var RounderBid = BestBid.Select(y => Math.Round(y.Price, 2)).ToList().ToList();
-            var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 2)).ToList().ToList();
+            var RounderBid = BestBid.Select(y => Math.Round(y.Price, 4)).ToList().ToList();
+            var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 4)).ToList().ToList();
             CurrentCumulativeDelta += RounderAskVol.First();
             CurrentCumulativeDelta -= RounderBidVol.First();
             Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
