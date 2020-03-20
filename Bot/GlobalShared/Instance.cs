@@ -118,8 +118,13 @@ namespace MaMa.HFT.Console.GlobalShared
                 Map.AddPrice(new PriceLayer(RounderBid[i], RounderBidVol[i], PriceDirection.Bid));
             }
             Logger.Info(string.Format("Price : {0}", Map.Map.Last().Price));
-            Logger.Info(string.Format("Ask Quantity Wall : {0}", Map.Map.Last().AskQuantity));
-            Logger.Info(string.Format("Bid Quantity Wall : {0}", Map.Map.Last().BidQuantity));
+            Logger.Info(string.Format("Ask Quantity Price : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().PriceLayerRef));
+            Logger.Info(string.Format("Ask Quantity Before : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().QuantityBefore));
+            Logger.Info(string.Format("Ask Quantity After : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().QuantityAfter));
+
+            Logger.Info(string.Format("Bid Quantity Price : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().PriceLayerRef));
+            Logger.Info(string.Format("Bid Quantity Before : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().QuantityBefore));
+            Logger.Info(string.Format("Bid Quantity After : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().QuantityAfter));
 
             //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), decimal.MinusOne,false,true));
             //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), null, true, false));
