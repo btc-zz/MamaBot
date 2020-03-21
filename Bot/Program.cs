@@ -7,7 +7,6 @@ namespace MaMa.HFT.Console
 {
     public class Program
     {
-        private static readonly NLog.Logger Logger = NLog.LogManager.GetCurrentClassLogger();
 
 
         public static async Task Main(string[] args)
@@ -17,8 +16,6 @@ namespace MaMa.HFT.Console
 
             
             Instance test = new Instance("BTCUSDT", Vars.BinanceApiKey, Vars.BinanceApiSecret);
-
-            test.ObSub();
 
             //CandleService LoadData = new CandleService("BTCUSDT");
 

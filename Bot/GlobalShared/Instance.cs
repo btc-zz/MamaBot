@@ -53,6 +53,7 @@ namespace MaMa.HFT.Console.GlobalShared
             var accountInfo = client.GetAccountInfo();
             ListenerKey = client.StartUserStream().Data;
             OrderDataStream();
+            this.SuscribeSocket();
         }
 
         public void OrderDataStream()
@@ -90,7 +91,7 @@ namespace MaMa.HFT.Console.GlobalShared
 
         }
 
-        public void ObSub()
+        public void SuscribeSocket()
         {
             //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
 
@@ -101,7 +102,7 @@ namespace MaMa.HFT.Console.GlobalShared
             });
             Task.Run(() =>
             {
-                socketClient.SubscribeToTradeUpdates(PairLink, TT7);
+                socketClient.SubscribeToTradeUpdates(PairLink, OrderSocketHandler);
 
             });
             Task.Run(() =>
@@ -124,13 +125,17 @@ namespace MaMa.HFT.Console.GlobalShared
 
         }
 
-        private void TT7(BinanceStreamTrade obj)
+        /// <summary>
+        /// Method used to receive Order socked
+        /// </summary>
+        /// <param name="Trade"></param>
+        private void OrderSocketHandler(BinanceStreamTrade Trade)
         {
             try
             {
-                if (obj.BuyerIsMaker)
+                if (Trade.BuyerIsMaker)
                 {
-                    BuyerMatcher.Add(obj);
+                    BuyerMatcher.Add(Trade);
                     var GrouperBuyer = BuyerMatcher.GroupBy(y => y.BuyerIsMaker = true);
                     var LastBuyer = GrouperBuyer.Last();
                     var FilledBuyerQuantity = LastBuyer.Sum(y => y.Quantity);
@@ -141,13 +146,13 @@ namespace MaMa.HFT.Console.GlobalShared
                 }
                 else
                 {
-                    SellerMatcher.Add(obj);
+                    SellerMatcher.Add(Trade);
                     var GrouperSeller = SellerMatcher.GroupBy(y => y.BuyerIsMaker = false);
                     var LastSeller = GrouperSeller.Last();
                     var FilledSellerQuantity = LastSeller.Sum(y => y.Quantity);
                     var FilledSellerPrice = LastSeller.Last().Price;
                     Logger.Info(string.Format("FilledSellerQuantity : {0}", FilledSellerQuantity));
-                    //Logger.Info(string.Format("FilledSellerPrice : {0}", FilledSellerPrice));
+                    Logger.Info(string.Format("FilledSellerPrice : {0}", FilledSellerPrice));
 
                 }
 
@@ -156,9 +161,9 @@ namespace MaMa.HFT.Console.GlobalShared
 
 
             }
-            catch
+            catch(Exception ex)
             {
-
+                MamaBot.GlobalShared.Vars.Logger.Error(string.Format("Exception occured on the OrderSocketHandler : {0}", ex.Message));
             }
         }
 
