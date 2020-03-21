@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using MaMa.HFT.Console.GlobalShared;
+using MamaBot;
 using MamaBot.GlobalShared;
 
 namespace MaMa.HFT.Console
@@ -14,13 +15,8 @@ namespace MaMa.HFT.Console
             // set bot settings
             const string token = "BTCUSDT";
 
+            
             Instance test = new Instance("BTCUSDT", Vars.BinanceApiKey, Vars.BinanceApiSecret);
-            //var strategyConfig = new MarketStrategyConfiguration
-            //{
-            //    MinOrderVolume = 1m,
-            //    MaxOrderVolume = 1m,
-            //    TradeWhenSpreadGreaterThan = -.05M
-            //};
 
             test.ObSub();
 

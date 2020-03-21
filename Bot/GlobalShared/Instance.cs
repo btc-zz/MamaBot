@@ -26,7 +26,10 @@ namespace MaMa.HFT.Console.GlobalShared
         public PriceMap Map = new PriceMap();
         protected readonly Logger Logger;
         public string PairLink { get; set; }
-        public List<BinanceStreamTrade> OrderMatcher = new List<BinanceStreamTrade>();
+        public List<BinanceStreamTrade> BuyerMatcher = new List<BinanceStreamTrade>();
+
+        public List<BinanceStreamTrade> SellerMatcher = new List<BinanceStreamTrade>();
+
         public string ListenerKey { get; set; }
         public Instance(string pair,string api,string apisec)
         {
@@ -90,10 +93,34 @@ namespace MaMa.HFT.Console.GlobalShared
         public void ObSub()
         {
             //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
-            //socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
-            socketClient.SubscribeToTradeUpdates(PairLink, TT7);
+
+            Task.Run(() =>
+            {
+                socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
+
+            });
+            Task.Run(() =>
+            {
+                socketClient.SubscribeToTradeUpdates(PairLink, TT7);
+
+            });
+            Task.Run(() =>
+            {
+                socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
+
+            });
+            Task.Run(() =>
+            {
+                socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
+
+            });
+
+
+
+
+            //socketClient.SubscribeToTradeUpdates(PairLink, TT7);
             //socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
-            socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
+            //socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
 
         }
 
@@ -101,24 +128,31 @@ namespace MaMa.HFT.Console.GlobalShared
         {
             try
             {
-                OrderMatcher.Add(obj);
-                var GrouperBuyer =  OrderMatcher.GroupBy(y => y.BuyerOrderId);
-                var GrouperSeller = OrderMatcher.GroupBy(y => y.SellerOrderId);
+                if (obj.BuyerIsMaker)
+                {
+                    BuyerMatcher.Add(obj);
+                    var GrouperBuyer = BuyerMatcher.GroupBy(y => y.BuyerIsMaker = true);
+                    var LastBuyer = GrouperBuyer.Last();
+                    var FilledBuyerQuantity = LastBuyer.Sum(y => y.Quantity);
+                    var FilledBuyerPrice = LastBuyer.Last().Price;
+                    Logger.Info(string.Format("FilledBuyerQuantity : {0}", FilledBuyerQuantity));
+                    Logger.Info(string.Format("FilledBuyerPrice : {0}", FilledBuyerPrice));
 
-                var LastBuyer = GrouperBuyer.Last();
-                var LastSeller = GrouperSeller.Last();
+                }
+                else
+                {
+                    SellerMatcher.Add(obj);
+                    var GrouperSeller = SellerMatcher.GroupBy(y => y.BuyerIsMaker = false);
+                    var LastSeller = GrouperSeller.Last();
+                    var FilledSellerQuantity = LastSeller.Sum(y => y.Quantity);
+                    var FilledSellerPrice = LastSeller.Last().Price;
+                    Logger.Info(string.Format("FilledSellerQuantity : {0}", FilledSellerQuantity));
+                    //Logger.Info(string.Format("FilledSellerPrice : {0}", FilledSellerPrice));
 
-                var FilledBuyerQuantity = LastBuyer.Sum(y => y.Quantity);
-                var FilledBuyerPrice = LastBuyer.Last().Price;
+                }
 
-                var FilledSellerquantity = LastSeller.Sum(y => y.Quantity);
-                var FilledSellerPrice = LastSeller.Last().Price;
 
-                Logger.Info(string.Format("FilledBuyerQuantity : {0}", FilledBuyerQuantity));
-                Logger.Info(string.Format("FilledBuyerPrice : {0}", FilledBuyerPrice));
 
-                Logger.Info(string.Format("FilledSelleruantity : {0}", FilledSellerquantity));
-                Logger.Info(string.Format("FilledSellerPrice : {0}", FilledSellerPrice));
 
 
             }
@@ -208,11 +242,16 @@ namespace MaMa.HFT.Console.GlobalShared
 
         private void TT5(BinanceStreamTick obj)
         {
+            var LastPrice = obj.LastPrice;
+            var BidPrice = obj.BidPrice;
+            var AskPrice = obj.BidPrice;
 
             //TBD
-            Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
+            //Logger.Info(string.Format("LastPrice : {0}", LastPrice));
+            //Logger.Info(string.Format("BidPrice : {0}", BidPrice));
+            //Logger.Info(string.Format("AskPrice : {0}", AskPrice));
 
-            Logger.Info(string.Format("WAP : {0}", obj.WeightedAveragePrice));
+            //Logger.Info(string.Format("WAP : {0}", obj.WeightedAveragePrice));
 
             CurrentCumulativeDelta -= obj.AskQuantity;
 
@@ -222,11 +261,14 @@ namespace MaMa.HFT.Console.GlobalShared
 
     private void KL1Min(BinanceStreamKlineData obj)
         {
+            //Periodic reset (Temporary)
+
+
             //this.IsAllowedIntoRange = obj.Data.Open > obj.Data.Close;
             //CurrentCumulativeDelta = (obj.Data.Volume - obj.Data.TakerBuyQuoteAssetVolume);
             //Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
             //Logger.Info(string.Format("VOL : {0}", obj.Data.Volume));
-            if (obj.Data.Final) { CurrentCumulativeDelta = 0; MapHistory.AddMap(Map); ; Map.Clear();
+            if (obj.Data.Final) { CurrentCumulativeDelta = 0; MapHistory.AddMap(Map); ; Map.Clear(); SellerMatcher.Clear();BuyerMatcher.Clear();
             }
         }
 
