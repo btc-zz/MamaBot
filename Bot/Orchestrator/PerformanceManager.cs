@@ -89,25 +89,21 @@ namespace MamaBot
             MonitoringRunningThread();
             Task.Factory.StartNew(() =>
             {
-                while (Transversal.IsShutingDown != true)
+                while (MamaBot.GlobalShared.Vars.IsShutingdown != true)
                 {
                     Process Me = Process.GetCurrentProcess();
                     MemoryUsage = Me.PrivateMemorySize64;
                     LastCheck = DateTime.Now;
-                    if (MemoryUsage > Threeshold)
-                    {
-                        Console.WriteLine("Perf - Memory : Last check was : {0}", LastCheck);
-                        Console.WriteLine("Perf - Memory : Check {0} bytes is higher than Threeshold : {1} bytes", MemoryUsage, Threeshold);
-                        Console.WriteLine("Perf - Memory : Starting Memory Garbage Collection");
-                        Report = Report + string.Format("Perf - Memory : Last check was : {0}", LastCheck);
-                        Report = Report + string.Format("Perf - Memory : Check {0} bytes is higher than Threeshold : {1} bytes", MemoryUsage, Threeshold);
+                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf - Memory : Last check was : {0}", LastCheck));
+                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf - Memory : Check {0} bytes is higher than Threeshold : {1} bytes", MemoryUsage, Threeshold));
+                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf - Memory : Starting Memory Garbage Collection"));
+                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf : Garbage Collection deleted {0} bytes ", Freedmemory));
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
                         LastClean = DateTime.Now;
                         Freedmemory = MemoryUsage - Process.GetCurrentProcess().PrivateMemorySize64;
                         Console.WriteLine("Perf : Garbage Collection deleted {0} bytes ", Freedmemory);
 
-                    }
                     Thread.Sleep(new TimeSpan(0, 0, 50));
                 }
 
@@ -123,7 +119,7 @@ namespace MamaBot
                 int LastOperationCheck = 0;
                 bool HasChanged = CurrentOperationRunning != LastOperationCheck;
 
-                while (!Transversal.IsShutingDown)
+                while (!MamaBot.GlobalShared.Vars.IsShutingdown)
                 {
                     if (HasChanged)
                     {
