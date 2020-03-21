@@ -21,6 +21,7 @@
     <PackageReference Include="Binance.Net" Version="5.1.0-alpha7" />
     <PackageReference Include="NLog" Version="4.5.9" />
     <PackageReference Include="NLog.Config" Version="4.5.9" />
+    <PackageReference Include="Polly" Version="7.2.0" />
     <PackageReference Include="Trady.Analysis" Version="3.2.8" />
     <PackageReference Include="Trady.Core" Version="3.2.9" />
   </ItemGroup>

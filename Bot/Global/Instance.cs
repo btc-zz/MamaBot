@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Linq;
 using System.Threading.Tasks;
+using Polly;
 
 namespace MaMa.HFT
 {
@@ -95,24 +96,62 @@ namespace MaMa.HFT
         {
             //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
 
+
+
             Task.Run(() =>
             {
-                socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
+                Policy
+                  .Handle<Exception>()
+                  .WaitAndRetry(new[]
+                  {
+                    TimeSpan.FromSeconds(10),
+                  }, (exception, timeSpan) => {
+                      socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
+
+                  }).Execute(() => socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min));
+
 
             });
             Task.Run(() =>
             {
-                socketClient.SubscribeToTradeUpdates(PairLink, OrderSocketHandler);
+
+             Policy
+                  .Handle<Exception>()
+                  .WaitAndRetry(new[]
+                  {
+                                    TimeSpan.FromSeconds(10),
+                  }, (exception, timeSpan) => {
+                      socketClient.SubscribeToTradeUpdates(PairLink, OrderSocketHandler);
+
+                  }).Execute(() => socketClient.SubscribeToTradeUpdates(PairLink, OrderSocketHandler));
 
             });
             Task.Run(() =>
             {
-                socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
+
+             Policy
+                 .Handle<Exception>()
+                 .WaitAndRetry(new[]
+                 {
+                                                TimeSpan.FromSeconds(10),
+                 }, (exception, timeSpan) => {
+                     socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
+
+                 }).Execute(() => socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5));
+
 
             });
             Task.Run(() =>
             {
-                socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
+             Policy
+                .Handle<Exception>()
+                .WaitAndRetry(new[]
+                {
+                                                            TimeSpan.FromSeconds(10),
+                }, (exception, timeSpan) => {
+                    socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
+
+                }).Execute(() => socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler));
 
             });
 
