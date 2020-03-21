@@ -53,7 +53,7 @@ namespace MaMa.HFT
             var accountInfo = client.GetAccountInfo();
             ListenerKey = client.StartUserStream().Data;
             OrderDataStream();
-            this.SuscribeSocket();
+            this.SubscribeSockets();
         }
 
         public void OrderDataStream()
@@ -91,7 +91,7 @@ namespace MaMa.HFT
 
         }
 
-        public void SuscribeSocket()
+        public void SubscribeSockets()
         {
             //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
 
