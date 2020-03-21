@@ -26,6 +26,7 @@ namespace MaMa.HFT.Console.GlobalShared
         public PriceMap Map = new PriceMap();
         protected readonly Logger Logger;
         public string PairLink { get; set; }
+        public List<BinanceStreamTrade> OrderMatcher = new List<BinanceStreamTrade>();
         public string ListenerKey { get; set; }
         public Instance(string pair,string api,string apisec)
         {
@@ -89,10 +90,42 @@ namespace MaMa.HFT.Console.GlobalShared
         public void ObSub()
         {
             //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
-            socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
+            //socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
+            socketClient.SubscribeToTradeUpdates(PairLink, TT7);
             //socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
-            socketClient.SubscribeToPartialOrderBookUpdates(PairLink,5, 100, OrderBookHandler);
+            socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
 
+        }
+
+        private void TT7(BinanceStreamTrade obj)
+        {
+            try
+            {
+                OrderMatcher.Add(obj);
+                var GrouperBuyer =  OrderMatcher.GroupBy(y => y.BuyerOrderId);
+                var GrouperSeller = OrderMatcher.GroupBy(y => y.SellerOrderId);
+
+                var LastBuyer = GrouperBuyer.Last();
+                var LastSeller = GrouperSeller.Last();
+
+                var FilledBuyerQuantity = LastBuyer.Sum(y => y.Quantity);
+                var FilledBuyerPrice = LastBuyer.Last().Price;
+
+                var FilledSellerquantity = LastSeller.Sum(y => y.Quantity);
+                var FilledSellerPrice = LastSeller.Last().Price;
+
+                Logger.Info(string.Format("FilledBuyerQuantity : {0}", FilledBuyerQuantity));
+                Logger.Info(string.Format("FilledBuyerPrice : {0}", FilledBuyerPrice));
+
+                Logger.Info(string.Format("FilledSelleruantity : {0}", FilledSellerquantity));
+                Logger.Info(string.Format("FilledSellerPrice : {0}", FilledSellerPrice));
+
+
+            }
+            catch
+            {
+
+            }
         }
 
         private void OrderBookHandler(BinanceOrderBook obj)
@@ -219,6 +252,11 @@ namespace MaMa.HFT.Console.GlobalShared
 
 
         }
+
+        /// <summary>
+        /// Here goes equity curve calculation
+        /// </summary>
+        /// <param name="obj"></param>
         private void BalanceStream(IEnumerable<BinanceStreamBalance> obj)
         {
             foreach(var value in obj)
