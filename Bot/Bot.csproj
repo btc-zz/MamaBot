@@ -3,12 +3,14 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Version>0.1.0</Version>
-    <Authors>Dmitry Petukhov</Authors>
-    <Product>BinanceBot</Product>
-    <Copyright>(c) 2018, Dmitry Petukhov.</Copyright>
-    <PackageProjectUrl>http://0xcode.in</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/codez0mb1e/BinanceBot</RepositoryUrl>
+    <Version>0.0.1</Version>
+    <Authors></Authors>
+    <Product></Product>
+    <Copyright></Copyright>
+    <PackageProjectUrl></PackageProjectUrl>
+    <RepositoryUrl></RepositoryUrl>
+    <Description>thank to Dmitry Petukhov for the basis idea</Description>
+    <PackageId>Mamabot</PackageId>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
