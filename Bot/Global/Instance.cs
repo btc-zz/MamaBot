@@ -13,9 +13,9 @@ using System.Threading;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace MaMa.HFT.Console.GlobalShared
+namespace MaMa.HFT
 {
-    public class Instance
+    public class BotIstance
     {
         public BinanceClient client { get; set; }
         public BinanceSocketClient socketClient = new BinanceSocketClient();
@@ -26,12 +26,12 @@ namespace MaMa.HFT.Console.GlobalShared
         public PriceMap Map = new PriceMap();
         protected readonly Logger Logger;
         public string PairLink { get; set; }
-        public List<BinanceStreamTrade> BuyerMatcher = new List<BinanceStreamTrade>();
 
+        public List<BinanceStreamTrade> BuyerMatcher = new List<BinanceStreamTrade>();
         public List<BinanceStreamTrade> SellerMatcher = new List<BinanceStreamTrade>();
 
         public string ListenerKey { get; set; }
-        public Instance(string pair,string api,string apisec)
+        public BotIstance(string pair,string api,string apisec)
         {
             Logger = LogManager.GetCurrentClassLogger();
 
