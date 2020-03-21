@@ -155,11 +155,6 @@ namespace MaMa.HFT.Console.GlobalShared
                     Logger.Info(string.Format("FilledSellerPrice : {0}", FilledSellerPrice));
 
                 }
-
-
-
-
-
             }
             catch(Exception ex)
             {
@@ -167,66 +162,70 @@ namespace MaMa.HFT.Console.GlobalShared
             }
         }
 
-        private void OrderBookHandler(BinanceOrderBook obj)
+        /// <summary>
+        /// Receive Orderbook Update coming for the subscription
+        /// </summary>
+        /// <param name="OrderbookLevel"></param>
+        private void OrderBookHandler(BinanceOrderBook OrderbookLevel)
         {
-            var BestAsk = (List<BinanceOrderBookEntry>)obj.Asks;
-            var BestBid = (List<BinanceOrderBookEntry>)obj.Bids;
-            var Capture = BestAsk.ConvertToBook(BestBid);
-            Capture.Compute();
-            BookSnapshot.AddBook(Capture);
-
-            var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
-            var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 5)).ToList().ToList();
-
-            var RounderBid = BestBid.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
-            var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 5)).ToList().ToList();
-
-            for(int i = 0;i < RounderAsk.Count; i++)
+            try
             {
-                Map.AddPrice(new PriceLayer(RounderAsk[i], RounderAskVol[i], PriceDirection.Ask));
+                var BestAsk = (List<BinanceOrderBookEntry>)OrderbookLevel.Asks;
+                var BestBid = (List<BinanceOrderBookEntry>)OrderbookLevel.Bids;
+                var Capture = BestAsk.ConvertToBook(BestBid);
+                Capture.Compute();
+                BookSnapshot.AddBook(Capture);
+
+                var RounderAsk = BestAsk.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
+                var RounderAskVol = BestAsk.Select(y => Math.Round(y.Quantity, 5)).ToList().ToList();
+
+                var RounderBid = BestBid.Select(y => Math.Round(y.Price, 0)).ToList().ToList();
+                var RounderBidVol = BestBid.Select(y => Math.Round(y.Quantity, 5)).ToList().ToList();
+
+                for (int i = 0; i < RounderAsk.Count; i++)
+                {
+                    Map.AddPrice(new PriceLayer(RounderAsk[i], RounderAskVol[i], PriceDirection.Ask));
+                }
+                for (int i = 0; i < RounderBid.Count; i++)
+                {
+                    Map.AddPrice(new PriceLayer(RounderBid[i], RounderBidVol[i], PriceDirection.Bid));
+                }
+                //Logger.Info(string.Format("Price : {0}", Map.Map.Last().Price));
+                //Logger.Info(string.Format("Ask Quantity Price : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().PriceLayerRef));
+                //Logger.Info(string.Format("Ask Quantity Before : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().QuantityBefore));
+                //Logger.Info(string.Format("Ask Quantity After : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().QuantityAfter));
+                //Logger.Info(string.Format("Bid Quantity Price : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().PriceLayerRef));
+                //Logger.Info(string.Format("Bid Quantity Before : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().QuantityBefore));
+                //Logger.Info(string.Format("Bid Quantity After : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().QuantityAfter));
+                //Logger.Info(string.Format("RounderAskVol : {0}", RounderAskVol.First()));
+                //Logger.Info(string.Format("RounderBidVol : {0}", RounderBidVol.First()));
+
+
+                //Extract Average volume Per Price;
+
+
+
+
+                //BookEntry Entry = new BookEntry(BestAsk[0].Price, BestBid[0].Price, obj.LastUpdateId);
+
+
+                //Logger.Info(string.Format("Spread : {0}", Entry.PriceSpread));
+                //Logger.Info(string.Format("MediumPrice : {0}", Entry.MediumPrice));
+                //Logger.Info(string.Format("Ask : {0}", Entry.Ask));
+                //Logger.Info(string.Format("CumuluatedBuyerOnHotRange : {0}", CumuluatedBuyerOnHotRange));
+                //Logger.Info(string.Format("BestLiquidAsk : {0}", BestLiquidAsk));
+
+                //Logger.Info(string.Format("Bid : {0}", Entry.Bid));
+                //Logger.Info(string.Format("CumuluatedSellerOnHotRange : {0}", CumuluatedSellerOnHotRange));
+                //Logger.Info(string.Format("BestLiquidBid : {0}", BestLiquidBid));
+
             }
-            for (int i = 0; i < RounderBid.Count; i++)
+
+            catch (Exception ex)
             {
-                Map.AddPrice(new PriceLayer(RounderBid[i], RounderBidVol[i], PriceDirection.Bid));
+                MamaBot.GlobalShared.Vars.Logger.Error(string.Format("Exception occured in the OrderBookHandler : {0}", ex.Message));
+
             }
-            Logger.Info(string.Format("Price : {0}", Map.Map.Last().Price));
-            Logger.Info(string.Format("Ask Quantity Price : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().PriceLayerRef));
-            Logger.Info(string.Format("Ask Quantity Before : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().QuantityBefore));
-            Logger.Info(string.Format("Ask Quantity After : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Ask).Last().QuantityAfter));
-
-            Logger.Info(string.Format("Bid Quantity Price : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().PriceLayerRef));
-            Logger.Info(string.Format("Bid Quantity Before : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().QuantityBefore));
-            Logger.Info(string.Format("Bid Quantity After : {0}", Map.Update.Where(y => y.TheChoice == PriceDirection.Bid).Last().QuantityAfter));
-
-            //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), decimal.MinusOne,false,true));
-            //Map.AddPrice(new PriceLayer(RounderAsk.First(), RounderAskVol.First(), null, true, false));
-
-            CurrentCumulativeDelta += RounderAskVol.First();
-            CurrentCumulativeDelta -= RounderBidVol.First();
-            
-            //Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
-
-            //Logger.Info(string.Format("RounderAskVol : {0}", RounderAskVol.First()));
-            //Logger.Info(string.Format("RounderBidVol : {0}", RounderBidVol.First()));
-
-
-            //Extract Average volume Per Price;
-
-
-
-
-            //BookEntry Entry = new BookEntry(BestAsk[0].Price, BestBid[0].Price, obj.LastUpdateId);
-
-
-            //Logger.Info(string.Format("Spread : {0}", Entry.PriceSpread));
-            //Logger.Info(string.Format("MediumPrice : {0}", Entry.MediumPrice));
-            //Logger.Info(string.Format("Ask : {0}", Entry.Ask));
-            //Logger.Info(string.Format("CumuluatedBuyerOnHotRange : {0}", CumuluatedBuyerOnHotRange));
-            //Logger.Info(string.Format("BestLiquidAsk : {0}", BestLiquidAsk));
-
-            //Logger.Info(string.Format("Bid : {0}", Entry.Bid));
-            //Logger.Info(string.Format("CumuluatedSellerOnHotRange : {0}", CumuluatedSellerOnHotRange));
-            //Logger.Info(string.Format("BestLiquidBid : {0}", BestLiquidBid));
 
 
 
