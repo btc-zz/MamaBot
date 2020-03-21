@@ -6,6 +6,22 @@ using System.Text;
 
 namespace Bot.DataProvider
 {
+    public enum BookOperation
+    {
+        Add,
+        Reduce
+    }
+
+    public enum BookLevel
+    {
+        Layer0,
+        Layer1,
+        Layer2,
+        Layer3,
+        Layer4,
+        Layer5
+    }
+
     public class OrderBook
     {
         public List<SimpleBookEntry> Asks { get; set; } = new List<SimpleBookEntry>();
