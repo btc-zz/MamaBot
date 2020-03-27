@@ -1,4 +1,5 @@
 ﻿using Binance.Net.Objects;
+using Bot.Services.Orderbook;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace Bot.DataProvider
         Reduce
     }
 
-    public enum BookLevel
+    public enum Flow
     {
         Layer0,
         Layer1,
@@ -55,6 +56,7 @@ namespace Bot.DataProvider
     public class BookSnap
     {
         public List<OrderBook> OrderBookSnap = new List<OrderBook>();
+        public OrderFlowStatistics Stats = new OrderFlowStatistics();
         public BookSnap()
         {
 
@@ -64,6 +66,7 @@ namespace Bot.DataProvider
         public void AddBook(OrderBook DataIn)
         {
             OrderBookSnap.Add(DataIn);
+
         }
     }
 }

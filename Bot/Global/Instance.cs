@@ -13,6 +13,7 @@ using System.Threading;
 using System.Linq;
 using System.Threading.Tasks;
 using Polly;
+using Bot.Services.Orderbook;
 
 namespace MaMa.HFT
 {
@@ -27,9 +28,10 @@ namespace MaMa.HFT
         public PriceMap Map = new PriceMap();
         protected readonly Logger Logger;
         public string PairLink { get; set; }
-
+        public OrderFlowStatistics TT2 = new OrderFlowStatistics();
         public List<BinanceStreamTrade> BuyerMatcher = new List<BinanceStreamTrade>();
         public List<BinanceStreamTrade> SellerMatcher = new List<BinanceStreamTrade>();
+        public event EventHandler<OrderFlowChange> BookUpdate;
 
         public string ListenerKey { get; set; }
         public BotIstance(string pair,string api,string apisec)
@@ -55,6 +57,8 @@ namespace MaMa.HFT
             ListenerKey = client.StartUserStream().Data;
             OrderDataStream();
             this.SubscribeSockets();
+            this.TT2.StatisticReady += BookUpdate;
+
         }
 
         public void OrderDataStream()
@@ -172,9 +176,11 @@ namespace MaMa.HFT
         {
             try
             {
+
                 if (Trade.BuyerIsMaker)
                 {
                     BuyerMatcher.Add(Trade);
+                    TT2.AddOrder(new Order(Trade.OrderId, Trade.Price, Trade.Quantity, OrderDirection.Buy, Trade.TradeTime));
                     var GrouperBuyer = BuyerMatcher.GroupBy(y => y.BuyerIsMaker = true);
                     var LastBuyer = GrouperBuyer.Last();
                     var FilledBuyerQuantity = LastBuyer.Sum(y => y.Quantity);
@@ -186,6 +192,7 @@ namespace MaMa.HFT
                 else
                 {
                     SellerMatcher.Add(Trade);
+                    TT2.AddOrder(new Order(Trade.OrderId, Trade.Price, Trade.Quantity, OrderDirection.Sell, Trade.TradeTime));
                     var GrouperSeller = SellerMatcher.GroupBy(y => y.BuyerIsMaker = false);
                     var LastSeller = GrouperSeller.Last();
                     var FilledSellerQuantity = LastSeller.Sum(y => y.Quantity);
@@ -282,6 +289,8 @@ namespace MaMa.HFT
             //}
 
         }
+
+
 
         private void TT5(BinanceStreamTick obj)
         {
