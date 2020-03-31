@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -94,10 +95,10 @@ namespace MamaBot
                     Process Me = Process.GetCurrentProcess();
                     MemoryUsage = Me.PrivateMemorySize64;
                     LastCheck = DateTime.Now;
-                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf - Memory : Last check was : {0}", LastCheck));
-                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf - Memory : Check {0} bytes is higher than Threeshold : {1} bytes", MemoryUsage, Threeshold));
-                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf - Memory : Starting Memory Garbage Collection"));
-                        MamaBot.GlobalShared.Vars.Logger.Info(string.Format("Perf : Garbage Collection deleted {0} bytes ", Freedmemory));
+                        MamaBot.GlobalShared.Vars.Logger.LogInformation($"Perf - Memory : Last check was : {LastCheck}");
+                        MamaBot.GlobalShared.Vars.Logger.LogInformation($"Perf - Memory : Check {MemoryUsage} bytes is higher than Threeshold : {Threeshold} bytes");
+                        MamaBot.GlobalShared.Vars.Logger.LogInformation($"Perf - Memory : Starting Memory Garbage Collection");
+                        MamaBot.GlobalShared.Vars.Logger.LogInformation($"Perf : Garbage Collection deleted {Freedmemory} bytes");
                         GC.Collect();
                         GC.WaitForPendingFinalizers();
                         LastClean = DateTime.Now;

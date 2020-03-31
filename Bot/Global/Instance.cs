@@ -4,67 +4,68 @@ using Bot.DataProvider;
 using CryptoExchange.Net.Authentication;
 using CryptoExchange.Net.Logging;
 using MamaBot.GlobalShared;
-using NLog;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Threading;
 using System.Linq;
 using System.Threading.Tasks;
-using Polly;
 using Bot.Services.Orderbook;
+using Bot;
+using Microsoft.Extensions.Logging;
 
-namespace MaMa.HFT
+namespace BotApp
 {
     public class BotIstance
     {
-        public BinanceClient client { get; set; }
-        public BinanceSocketClient socketClient = new BinanceSocketClient();
-        private CancellationToken token;
+        private readonly BotConfig _botConfig;
+        private readonly ILogger _logger;
+
+        public BinanceClient _client { get; set; }
+        public BinanceSocketClient _socketClient = new BinanceSocketClient();
         decimal CurrentCumulativeDelta = 0;
         public BookSnap BookSnapshot = new BookSnap();
         public PriceMapSnap MapHistory = new PriceMapSnap();
         public PriceMap Map = new PriceMap();
-        protected readonly Logger Logger;
-        public string PairLink { get; set; }
         public OrderFlowStatistics TT2 = new OrderFlowStatistics();
         public List<BinanceStreamTrade> BuyerMatcher = new List<BinanceStreamTrade>();
         public List<BinanceStreamTrade> SellerMatcher = new List<BinanceStreamTrade>();
         public event EventHandler<OrderFlowChange> BookUpdate;
 
         public string ListenerKey { get; set; }
-        public BotIstance(string pair,string api,string apisec)
+
+        public BotIstance(BotConfig botConfig, ILogger<BotIstance> logger)
         {
-            Logger = LogManager.GetCurrentClassLogger();
-
-            PairLink = pair;
-
-
-            BinanceClient.SetDefaultOptions(new BinanceClientOptions()
-            {
-                ApiCredentials = new ApiCredentials(api, apisec),
-                LogVerbosity = LogVerbosity.Debug
-            });
-
-            BinanceSocketClient.SetDefaultOptions(new BinanceSocketClientOptions()
-            {
-                ApiCredentials = new ApiCredentials(api, apisec),
-                LogVerbosity = LogVerbosity.Debug
-            });
-            client = new BinanceClient();
-            var accountInfo = client.GetAccountInfo();
-            ListenerKey = client.StartUserStream().Data;
-            OrderDataStream();
-            this.SubscribeSockets();
-            this.TT2.StatisticReady += BookUpdate;
-
+            _botConfig = botConfig;
+            _logger = logger;
         }
 
-        public void OrderDataStream()
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            socketClient.SubscribeToUserDataUpdates(ListenerKey, null, OrderStreamUpdate, OrderStream, BalanceStream, null);
+            _client = new BinanceClient(new BinanceClientOptions()
+            {
+                ApiCredentials = new ApiCredentials(_botConfig.ApiKey, _botConfig.ApiSecret),
+                LogVerbosity = LogVerbosity.Debug
+            });
+            //var accountInfo = await client.GetAccountInfoAsync(ct: cancellationToken);
+            var streamResult = await _client.StartUserStreamAsync(cancellationToken);
 
+            ListenerKey = streamResult.Data;
+
+            await OrderDataStreamAsync(cancellationToken);
+
+            await SubscribeSocketsAsync(cancellationToken);
+
+            TT2.StatisticReady += BookUpdate;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        public async Task OrderDataStreamAsync(CancellationToken cancellationToken)
+        {
+            await _socketClient.SubscribeToUserDataUpdatesAsync(ListenerKey, null, OrderStreamUpdate, OrderStream, BalanceStream, null);
         }
 
         public void StartMaker()
@@ -78,94 +79,34 @@ namespace MaMa.HFT
 
         }
 
+        //public void PlaceOrder(string PairLink, OrderSide side , OrderType type, decimal quantity, decimal price)
+        //{
 
-        public void PlaceOrder(string PairLink, OrderSide side , OrderType type, decimal quantity, decimal price)
+        //    var orderResult = _client.PlaceOrder(PairLink, side, type, quantity, null, null, price, TimeInForce.GoodTillCancel, null, null, null, null, token);
+
+        //    if(orderResult.Error != null && Vars.ShowOrderErrors)
+        //    {
+        //        _logger.LogError("Order not executed due to : {0}" + orderResult.Error.Message);
+
+        //    }
+        //    else
+        //    {
+
+        //    }
+        //}
+
+        public async Task SubscribeSocketsAsync(CancellationToken cancellationToken)
         {
+            //socketClient.SubscribeToBookTickerUpdates(_botConfig.Pair, HandleBookOffer);
 
-            var orderResult = client.PlaceOrder(PairLink, side, type, quantity, null, null, price, TimeInForce.GoodTillCancel, null, null, null, null, token);
-            if(orderResult.Error != null && Vars.ShowOrderErrors)
-            {
-                Logger.Error(string.Format("Order not executed due to : {0}", orderResult.Error.Message));
+            await _socketClient.SubscribeToKlineUpdatesAsync(_botConfig.Pair, KlineInterval.OneMinute, KL1Min);
+            await _socketClient.SubscribeToTradeUpdatesAsync(_botConfig.Pair, OrderSocketHandler);
+            await _socketClient.SubscribeToSymbolTickerUpdatesAsync(_botConfig.Pair, TT5);
+            await _socketClient.SubscribeToPartialOrderBookUpdatesAsync(_botConfig.Pair, 5, 100, OrderBookHandler);
 
-            }
-            else
-            {
-
-            }
-
-
-        }
-
-        public void SubscribeSockets()
-        {
-            //socketClient.SubscribeToBookTickerUpdates(PairLink, HandleBookOffer);
-
-
-
-            Task.Run(() =>
-            {
-                Policy
-                  .Handle<Exception>()
-                  .WaitAndRetry(new[]
-                  {
-                    TimeSpan.FromSeconds(10),
-                  }, (exception, timeSpan) => {
-                      socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min);
-
-                  }).Execute(() => socketClient.SubscribeToKlineUpdates(PairLink, KlineInterval.OneMinute, KL1Min));
-
-
-            });
-            Task.Run(() =>
-            {
-
-             Policy
-                  .Handle<Exception>()
-                  .WaitAndRetry(new[]
-                  {
-                                    TimeSpan.FromSeconds(10),
-                  }, (exception, timeSpan) => {
-                      socketClient.SubscribeToTradeUpdates(PairLink, OrderSocketHandler);
-
-                  }).Execute(() => socketClient.SubscribeToTradeUpdates(PairLink, OrderSocketHandler));
-
-            });
-            Task.Run(() =>
-            {
-
-             Policy
-                 .Handle<Exception>()
-                 .WaitAndRetry(new[]
-                 {
-                                                TimeSpan.FromSeconds(10),
-                 }, (exception, timeSpan) => {
-                     socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
-
-                 }).Execute(() => socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5));
-
-
-            });
-            Task.Run(() =>
-            {
-             Policy
-                .Handle<Exception>()
-                .WaitAndRetry(new[]
-                {
-                                                            TimeSpan.FromSeconds(10),
-                }, (exception, timeSpan) => {
-                    socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
-
-                }).Execute(() => socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler));
-
-            });
-
-
-
-
-            //socketClient.SubscribeToTradeUpdates(PairLink, TT7);
-            //socketClient.SubscribeToSymbolTickerUpdates(PairLink, TT5);
-            //socketClient.SubscribeToPartialOrderBookUpdates(PairLink, 5, 100, OrderBookHandler);
-
+            //socketClient.SubscribeToTradeUpdates(_botConfig.Pair, TT7);
+            //socketClient.SubscribeToSymbolTickerUpdates(_botConfig.Pair, TT5);
+            //socketClient.SubscribeToPartialOrderBookUpdates(_botConfig.Pair, 5, 100, OrderBookHandler);
         }
 
         /// <summary>
@@ -185,8 +126,8 @@ namespace MaMa.HFT
                     var LastBuyer = GrouperBuyer.Last();
                     var FilledBuyerQuantity = LastBuyer.Sum(y => y.Quantity);
                     var FilledBuyerPrice = LastBuyer.Last().Price;
-                    Logger.Info(string.Format("FilledBuyerQuantity : {0}", FilledBuyerQuantity));
-                    Logger.Info(string.Format("FilledBuyerPrice : {0}", FilledBuyerPrice));
+                    _logger.LogInformation($"FilledBuyerQuantity : {FilledBuyerQuantity}");
+                    _logger.LogInformation($"FilledBuyerPrice : {FilledBuyerPrice}");
 
                 }
                 else
@@ -197,14 +138,14 @@ namespace MaMa.HFT
                     var LastSeller = GrouperSeller.Last();
                     var FilledSellerQuantity = LastSeller.Sum(y => y.Quantity);
                     var FilledSellerPrice = LastSeller.Last().Price;
-                    Logger.Info(string.Format("FilledSellerQuantity : {0}", FilledSellerQuantity));
-                    Logger.Info(string.Format("FilledSellerPrice : {0}", FilledSellerPrice));
+                    _logger.LogInformation($"FilledSellerQuantity : {FilledSellerQuantity}");
+                    _logger.LogInformation($"FilledSellerPrice : {FilledSellerPrice}");
 
                 }
             }
             catch(Exception ex)
             {
-                MamaBot.GlobalShared.Vars.Logger.Error(string.Format("Exception occured on the OrderSocketHandler : {0}", ex.Message));
+                MamaBot.GlobalShared.Vars.Logger.LogError("Exception occured on the OrderSocketHandler : " + ex.Message);
             }
         }
 
@@ -269,7 +210,7 @@ namespace MaMa.HFT
 
             catch (Exception ex)
             {
-                MamaBot.GlobalShared.Vars.Logger.Error(string.Format("Exception occured in the OrderBookHandler : {0}", ex.Message));
+                MamaBot.GlobalShared.Vars.Logger.LogError("Exception occured in the OrderBookHandler : " + ex.Message);
 
             }
 
@@ -329,12 +270,12 @@ namespace MaMa.HFT
 
             try
             {
-                var CurrentOrder = client.GetOpenOrders(PairLink);
+                var CurrentOrder = _client.GetOpenOrders(_botConfig.Pair);
                 foreach (var order in CurrentOrder.Data)
                 {
-                    if (order.Side == direction && order.Symbol == PairLink)
+                    if (order.Side == direction && order.Symbol == _botConfig.Pair)
                     {
-                        client.CancelOrder(PairLink, order.OrderId);
+                        _client.CancelOrder(_botConfig.Pair, order.OrderId);
                     }
                 }
 
@@ -389,8 +330,8 @@ namespace MaMa.HFT
 
                     //}
                     break;
-                    Logger.Info(string.Format("TransactionTime received for : {0}", obj.Status));
-                    Logger.Info(string.Format("ListOrderStatus received for : {0}", obj.Quantity));
+                    _logger.LogInformation($"TransactionTime received for : {obj.Status}");
+                    _logger.LogInformation($"ListOrderStatus received for : {obj.Quantity}");
             }
         }
     }
