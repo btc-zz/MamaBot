@@ -58,9 +58,9 @@ namespace BotApp
             TT2.StatisticReady += BookUpdate;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public async Task StopAsync(CancellationToken cancellationToken)
         {
-            return Task.CompletedTask;
+            await _socketClient.UnsubscribeAll();
         }
 
         public async Task OrderDataStreamAsync(CancellationToken cancellationToken)
@@ -143,7 +143,7 @@ namespace BotApp
 
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 MamaBot.GlobalShared.Vars.Logger.LogError("Exception occured on the OrderSocketHandler : " + ex.Message);
             }
@@ -231,13 +231,11 @@ namespace BotApp
 
         }
 
-
-
         private void TT5(BinanceStreamTick obj)
         {
             var LastPrice = obj.LastPrice;
             var BidPrice = obj.BidPrice;
-            var AskPrice = obj.BidPrice;
+            var AskPrice = obj.AskPrice;
 
             //TBD
             //Logger.Info(string.Format("LastPrice : {0}", LastPrice));
@@ -252,16 +250,22 @@ namespace BotApp
 
         }
 
-    private void KL1Min(BinanceStreamKlineData obj)
+        private void KL1Min(BinanceStreamKlineData obj)
         {
             //Periodic reset (Temporary)
-
 
             //this.IsAllowedIntoRange = obj.Data.Open > obj.Data.Close;
             //CurrentCumulativeDelta = (obj.Data.Volume - obj.Data.TakerBuyQuoteAssetVolume);
             //Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
             //Logger.Info(string.Format("VOL : {0}", obj.Data.Volume));
-            if (obj.Data.Final) { CurrentCumulativeDelta = 0; MapHistory.AddMap(Map); ; Map.Clear(); SellerMatcher.Clear();BuyerMatcher.Clear();
+
+            if (obj.Data.Final)
+            {
+                CurrentCumulativeDelta = 0;
+                MapHistory.AddMap(Map);
+                Map.Clear();
+                SellerMatcher.Clear();
+                BuyerMatcher.Clear();
             }
         }
 

@@ -10,10 +10,11 @@ namespace Bot
     {
         public static async Task Main(string[] args)
         {
-            using var host = CreateHostBuilder(args).Build();
-
-            host.Start();
-            await host.WaitForShutdownAsync();
+            using (var host = CreateHostBuilder(args).Build())
+            {
+                host.Start();
+                await host.WaitForShutdownAsync();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args)
