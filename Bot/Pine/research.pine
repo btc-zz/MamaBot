@@ -1,0 +1,130 @@
+//@version=4
+study("MMRD v1.0 ")
+ShowLevel=input(defval=false,title='ShowLevels')
+
+rv(x, t, v)=>
+    er   = 2*t - 1
+    u      = 2/(er + 1)
+    e     = 0.0
+    e    := x > x[1] ? u*(x - x[1]) + (1 - u)*nz(e[1]) : (1 - u)*nz(e[1])
+    ax     = 0.0
+    ax    := x > x[1] ? (1 - u)*nz(ax[1]) : u*(x[1] - x) + (1 - u)*nz(ax[1])
+    l    = (t - 1)*(ax*v/(100 - v) - e)
+    rv = l >= 0 ? x + l : x + l*(100 - v)/v
+    rv
+
+vm(x, t, o)=>
+    vm  = x
+    vm := na(vm[1]) ? x : (1 - (1/t)*o)*nz(vm[1]) + (1/t)*o*x
+    vm
+
+src = input(defval=close, title="Source")
+per = input(2, minval=1, title="Vper")
+perc = input(defval=7, minval=0, title="Vol")
+highb = rv(src, perc, 70)
+lowb = rv(src, perc, 30)
+vol    = highb - lowb
+vi     = (vol - lowest(vol, perc))/(highest(vol, perc) - lowest(vol, perc))
+ma = vm(src, per, vi)
+sh = src > ma ? src : ma
+sl = src < ma ? src : ma
+mh  = vm(sh, per, vi)
+ml  = vm(sl, per, vi)
+m = (mh + ml)/2
+distance = (mh - ml)/2
+
+h5 = m + distance*5
+h4 = m + distance*4
+h3 = m + distance*3
+h2 = m + distance*2
+h1 = m + distance*1
+l1 = m - distance*1
+l2 = m - distance*2
+l3 = m - distance*3
+l4 = m - distance*4
+l5 = m - distance*5
+
+keyvalue = input(5, title = "Key Vaule. 'This changes the sensitivity'", step = .5)
+atrperiod = input(28, title="ATR Period")
+xATR = atr(atrperiod)
+nLoss = vi * xATR
+// Before
+//nLoss = keyvalue * xATR
+
+
+xATRTrailingStop = 0.0
+xATRTrailingStop := iff(m > nz(xATRTrailingStop[1], 0) and m[1] > nz(xATRTrailingStop[1], 0), max(nz(xATRTrailingStop[1]), m - nLoss),
+   iff(m < nz(xATRTrailingStop[1], 0) and m[1] < nz(xATRTrailingStop[1], 0), min(nz(xATRTrailingStop[1]), m + nLoss), 
+   iff(m > nz(xATRTrailingStop[1], 0), m - nLoss, m + nLoss)))
+ 
+pos = 0   
+pos :=	iff(m[1] < nz(xATRTrailingStop[1], 0) and m > nz(xATRTrailingStop[1], 0), 1,
+   iff(m[1] > nz(xATRTrailingStop[1], 0) and m < nz(xATRTrailingStop[1], 0), -1, nz(pos[1], 0))) 
+   
+xcolor = pos == -1 ? color.red: pos == 1 ? color.green : color.blue
+
+plot(xATRTrailingStop, color = xcolor, title = "Trailing Stop",trackprice=true)
+plot(m,color = xcolor,title='M',trackprice=true)
+buy = crossover(m,xATRTrailingStop) 
+sell = crossunder(m,xATRTrailingStop) 
+
+
+longCondition =  buy == true and buy[1] == false and distance > sma(distance,50) ? 1:na
+shortCondition = sell == true and sell[1] == false  and distance > sma(distance,50) ? 1:na
+
+plotshape(longCondition, title = "Buy", text = 'Buy', style = shape.labelup, location = location.belowbar, color= color.green,textcolor = color.white, transp = 0, size = size.tiny)
+plotshape(shortCondition, title = "Sell", text = 'Sell', style = shape.labeldown, color= color.red,textcolor = color.white, transp = 0, size = size.tiny)
+
+LastIsLong = barssince(longCondition)<barssince(shortCondition) ? 1:na
+LastIsShort = barssince(longCondition)>barssince(shortCondition) ? 1:na
+LastUpSide = barssince(longCondition)<barssince(shortCondition) ? 1:na
+LastDnSide = barssince(shortCondition)<barssince(longCondition) ? 1:na
+
+
+    
+//plot(barssince(longCondition)<barssince(shortCondition) ? 1:0,title='lastislong',trackprice=false)
+//plot(barssince(longCondition)>barssince(shortCondition) ? 1:0,title='lastisshort',trackprice=false)
+
+last_longConditionPrice = valuewhen(longCondition,close,0)
+last_shortConditionPrice = valuewhen(shortCondition,close,0)
+
+short_profit = longCondition == 1 ? abs(((close-last_shortConditionPrice)/last_shortConditionPrice)*100) : na
+long_profit = shortCondition == 1 ? abs(((close-last_longConditionPrice)/last_longConditionPrice)*100) : na
+
+//plot(short_profit,title='ShortProfit',style=plot.style_histogram,linewidth=4,color= short_profit[1] > short_profit ? color.red : color.green)
+
+//plot(long_profit,title='long_profit',style=plot.style_histogram,linewidth=4,color= short_profit[1] > short_profit ? color.red : color.green)
+
+smoothK = input(3, minval=1)
+smoothD = input(3, minval=1)
+lengthRSI = input(14, minval=1)
+lengthStoch = input(14, minval=1)
+
+
+rsi1 = rsi(short_profit, lengthRSI)
+k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = sma(k, smoothD)
+//plot(k, color=color.blue,title="shortk",linewidth=3)
+//plot(d, color=color.orange,title='shortd',linewidth=3)
+//p0 = hline(80)
+//p1 = hline(20)
+//fill(p0, p1, color=color.red, transp=80)
+//alertcondition(k < d  and LastIsShort,title='shortp1',message='shortp')
+
+lastalertlong =  LastIsShort
+lastalertshort = LastIsLong
+
+plot(ShowLevel ? h1:na,trackprice=true,color=color.green)
+plot(ShowLevel ? h2:na,trackprice=true,color=color.green)
+plot(ShowLevel ? h3:na,trackprice=true,color=color.green)
+plot(ShowLevel ? h4:na,trackprice=true,color=color.green)
+plot(ShowLevel ? h5:na,trackprice=true,color=color.green)
+
+plot(ShowLevel ? l1:na,trackprice=true,color=color.red)
+plot(ShowLevel ? l2:na,trackprice=true,color=color.red)
+plot(ShowLevel ? l3:na,trackprice=true,color=color.red)
+plot(ShowLevel ? l4:na,trackprice=true,color=color.red)
+plot(ShowLevel ? l5:na,trackprice=true,color=color.red)
+
+//Bar Color
+//barcolor(barcolor)

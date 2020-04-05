@@ -73,7 +73,7 @@ namespace Bot.Services.Orderbook
                 //Start computation here
                 var test = TestCMPT(selectPrice, 7, 30);
                 var test2 = TestCMPT(selectPrice, 7, 70);
-
+                MamaBot.GlobalShared.Vars.Logger.Debug("message here");
                 decimal TestCMPT(List<decimal> xList, decimal t, decimal v)
                 {
                     decimal output = 0;
