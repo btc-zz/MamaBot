@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Bot.Services.Orderbook
 {
@@ -47,7 +48,7 @@ namespace Bot.Services.Orderbook
 
     public class OrderFlowStatistics
     {
-      
+
         public decimal BearishVolume { get; set; } = 0;
         public decimal BullishVolume { get; set; } = 0;
         public decimal VolumeIntensity { get; set; } = 0;
@@ -73,7 +74,7 @@ namespace Bot.Services.Orderbook
                 //Start computation here
                 var test = TestCMPT(selectPrice, 7, 30);
                 var test2 = TestCMPT(selectPrice, 7, 70);
-                MamaBot.GlobalShared.Vars.Logger.Debug("message here");
+                MamaBot.GlobalShared.Vars.Logger.LogDebug("message here");
                 decimal TestCMPT(List<decimal> xList, decimal t, decimal v)
                 {
                     decimal output = 0;
