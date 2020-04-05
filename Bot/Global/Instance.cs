@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Bot.Services.Orderbook;
 using Bot;
 using Microsoft.Extensions.Logging;
+using JM.LinqFaster;
 
 namespace BotApp
 {
@@ -113,33 +114,34 @@ namespace BotApp
         /// Method used to receive Order socked
         /// </summary>
         /// <param name="Trade"></param>
-        private void OrderSocketHandler(BinanceStreamTrade Trade)
+        private int _currentMinute;
+        private void OrderSocketHandler(BinanceStreamTrade trade)
         {
+            if (_currentMinute < trade.TradeTime.Minute)
+            {
+                _currentMinute = trade.TradeTime.Minute;
+                SellerMatcher.Clear();
+                BuyerMatcher.Clear();
+            }
+
             try
             {
-
-                if (Trade.BuyerIsMaker)
+                if (trade.BuyerIsMaker)
                 {
-                    BuyerMatcher.Add(Trade);
-                    TT2.AddOrder(new Order(Trade.OrderId, Trade.Price, Trade.Quantity, OrderDirection.Buy, Trade.TradeTime));
-                    var GrouperBuyer = BuyerMatcher.GroupBy(y => y.BuyerIsMaker = true);
-                    var LastBuyer = GrouperBuyer.Last();
-                    var FilledBuyerQuantity = LastBuyer.Sum(y => y.Quantity);
-                    var FilledBuyerPrice = LastBuyer.Last().Price;
-                    _logger.LogInformation($"FilledBuyerQuantity : {FilledBuyerQuantity}");
-                    _logger.LogInformation($"FilledBuyerPrice : {FilledBuyerPrice}");
+                    BuyerMatcher.Add(trade);
+                    TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
+                    var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
+                    _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
+                    _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
 
                 }
                 else
                 {
-                    SellerMatcher.Add(Trade);
-                    TT2.AddOrder(new Order(Trade.OrderId, Trade.Price, Trade.Quantity, OrderDirection.Sell, Trade.TradeTime));
-                    var GrouperSeller = SellerMatcher.GroupBy(y => y.BuyerIsMaker = false);
-                    var LastSeller = GrouperSeller.Last();
-                    var FilledSellerQuantity = LastSeller.Sum(y => y.Quantity);
-                    var FilledSellerPrice = LastSeller.Last().Price;
-                    _logger.LogInformation($"FilledSellerQuantity : {FilledSellerQuantity}");
-                    _logger.LogInformation($"FilledSellerPrice : {FilledSellerPrice}");
+                    SellerMatcher.Add(trade);
+                    TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
+                    var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
+                    _logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
+                    _logger.LogInformation($"FilledSellerPrice : {trade.Price}");
 
                 }
             }
@@ -264,8 +266,6 @@ namespace BotApp
                 CurrentCumulativeDelta = 0;
                 MapHistory.AddMap(Map);
                 Map.Clear();
-                SellerMatcher.Clear();
-                BuyerMatcher.Clear();
             }
         }
 
