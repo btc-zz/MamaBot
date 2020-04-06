@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace Bot.Services.Orderbook
 {
@@ -67,7 +68,7 @@ namespace Bot.Services.Orderbook
         /// Todo : Add validation here
         /// </summary>
         /// <param name="NewOrder"></param>
-        public void AddOrder(Order NewOrder) { this.Orders.Add(NewOrder);
+        public async void AddOrder(Order NewOrder) { this.Orders.Add(NewOrder);
             if(this.Orders.Count > PeriodicAnalysisLong)
             {
                 var selectPrice = this.Orders.Select(y => y.Price).ToList();
@@ -78,7 +79,8 @@ namespace Bot.Services.Orderbook
                 decimal TestCMPT(List<decimal> xList, decimal t, decimal v)
                 {
                     decimal output = 0;
-                    foreach(var x in xList)
+
+                    Parallel.ForEach(xList, x =>
                     {
                         var indexofP = xList.ToList().IndexOf(x) - 1;
                         decimal er = 2 * t - 1;
@@ -88,7 +90,8 @@ namespace Bot.Services.Orderbook
                         decimal z = (t - 1) * (ax * v / 100 - v) - e;
                         decimal o = z >= 0 ? x + z : x + z * (100 - v) / v;
                         output = o;
-                    }
+
+                    });
                     return output;
 
                 }

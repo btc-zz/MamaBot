@@ -121,7 +121,13 @@ namespace BotApp
                 if (trade.BuyerIsMaker)
                 {
                     BuyerMatcher.Add(trade);
-                    TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
+
+                    Task.Run(() =>
+                    {
+                        TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
+
+                    });
+
                     var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
                     _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
                     _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
@@ -130,7 +136,12 @@ namespace BotApp
                 else
                 {
                     SellerMatcher.Add(trade);
-                    TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
+                    Task.Run(() =>
+                    {
+                        TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
+
+                    });
+
                     var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
                     _logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
                     _logger.LogInformation($"FilledSellerPrice : {trade.Price}");
