@@ -117,7 +117,8 @@ namespace BotApp
         private int _currentMinute;
         private void OrderSocketHandler(BinanceStreamTrade trade)
         {
-            if (_currentMinute < trade.TradeTime.Minute)
+            if (_currentMinute < trade.TradeTime.Minute ||
+                _currentMinute == 59 && trade.TradeTime.Minute == 0)
             {
                 _currentMinute = trade.TradeTime.Minute;
                 SellerMatcher.Clear();
