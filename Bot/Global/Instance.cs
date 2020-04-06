@@ -48,9 +48,9 @@ namespace BotApp
                 LogVerbosity = LogVerbosity.Debug
             });
             //var accountInfo = await client.GetAccountInfoAsync(ct: cancellationToken);
-            var streamResult = await _client.StartUserStreamAsync(cancellationToken);
+            //var streamResult = await _client.StartUserStreamAsync(cancellationToken);
 
-            ListenerKey = streamResult.Data;
+            //ListenerKey = streamResult.Data;
 
             await OrderDataStreamAsync(cancellationToken);
 
@@ -66,7 +66,7 @@ namespace BotApp
 
         public async Task OrderDataStreamAsync(CancellationToken cancellationToken)
         {
-            await _socketClient.SubscribeToUserDataUpdatesAsync(ListenerKey, null, OrderStreamUpdate, OrderStream, BalanceStream, null);
+            //await _socketClient.SubscribeToUserDataUpdatesAsync(ListenerKey, null, OrderStreamUpdate, OrderStream, BalanceStream, null);
         }
 
         public void StartMaker()
@@ -114,17 +114,8 @@ namespace BotApp
         /// Method used to receive Order socked
         /// </summary>
         /// <param name="Trade"></param>
-        private int _currentMinute;
         private void OrderSocketHandler(BinanceStreamTrade trade)
         {
-            if (_currentMinute < trade.TradeTime.Minute ||
-                _currentMinute == 59 && trade.TradeTime.Minute == 0)
-            {
-                _currentMinute = trade.TradeTime.Minute;
-                SellerMatcher.Clear();
-                BuyerMatcher.Clear();
-            }
-
             try
             {
                 if (trade.BuyerIsMaker)
@@ -256,17 +247,16 @@ namespace BotApp
         private void KL1Min(BinanceStreamKlineData obj)
         {
             //Periodic reset (Temporary)
-
-            //this.IsAllowedIntoRange = obj.Data.Open > obj.Data.Close;
-            //CurrentCumulativeDelta = (obj.Data.Volume - obj.Data.TakerBuyQuoteAssetVolume);
-            //Logger.Info(string.Format("CVD : {0}", CurrentCumulativeDelta));
-            //Logger.Info(string.Format("VOL : {0}", obj.Data.Volume));
-
             if (obj.Data.Final)
             {
                 CurrentCumulativeDelta = 0;
                 MapHistory.AddMap(Map);
                 Map.Clear();
+                Map.Update.Clear();
+                BookSnapshot.OrderBookSnap.Clear();
+                SellerMatcher.Clear();
+                BuyerMatcher.Clear();
+
             }
         }
 
