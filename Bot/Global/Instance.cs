@@ -130,50 +130,57 @@ namespace BotApp
         /// Method used to receive Order socked
         /// </summary>
         /// <param name="Trade"></param>
-        private void OrderSocketHandler(BinanceStreamTrade trade)
+        private async void OrderSocketHandler(BinanceStreamTrade trade)
         {
             try
             {
                 Stopwatch counter = new Stopwatch();
+                System.Threading.Thread ComputeThread = new Thread(() => {
 
-                if (trade.BuyerIsMaker)
-                {
-
-                    Task.Run(() =>
+                    if (trade.BuyerIsMaker)
                     {
-                        counter.Start();
-                        BuyerMatcher.Add(trade);
-                        TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
-                        var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
-                        counter.Stop();
-                        _logger.LogInformation($"StopWatch Buy Trade : {counter.Elapsed}");
 
-                        _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
-                        _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
+                        Task.Run(() =>
+                        {
+                            counter.Start();
+                            BuyerMatcher.Add(trade);
+                            TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
+                            var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
+                            counter.Stop();
+                            _logger.LogInformation($"StopWatch Buy Trade : {counter.Elapsed}");
 
-                    });
+                            _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
+                            _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
+
+                        });
 
 
-                }
-                else
-                {
-                    Task.Run(() =>
+                    }
+                    else
                     {
-                        counter.Start();
-                        SellerMatcher.Add(trade);
-                        TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
-                        var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
-                        counter.Stop();
-                        _logger.LogInformation($"StopWatch Seller Trade : {counter.Elapsed}");
+                        Task.Run(() =>
+                        {
+                            counter.Start();
+                            SellerMatcher.Add(trade);
+                            TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
+                            var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
+                            counter.Stop();
+                            _logger.LogInformation($"StopWatch Seller Trade : {counter.Elapsed}");
 
-                        //_logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
-                        //_logger.LogInformation($"FilledSellerPrice : {trade.Price}");
+                            //_logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
+                            //_logger.LogInformation($"FilledSellerPrice : {trade.Price}");
 
 
-                    });
+                        });
 
 
-                }
+                    }
+
+                });
+                ComputeThread.ApartmentState = ApartmentState.MTA;
+                ComputeThread.Start();
+
+
             }
             catch (Exception ex)
             {
