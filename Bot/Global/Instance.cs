@@ -18,6 +18,7 @@ using Binance.Net.Objects.Spot.MarketData;
 using Binance.Net.Objects.Spot.UserStream;
 using Binance.Net.Enums;
 using Binance.Net.Objects.Spot;
+using System.Diagnostics;
 
 namespace BotApp
 {
@@ -43,6 +44,14 @@ namespace BotApp
         {
             _botConfig = botConfig;
             _logger = logger;
+            BinanceSocketClientOptions SocketOptions = new BinanceSocketClientOptions();
+            SocketOptions.SocketNoDataTimeout = new TimeSpan(0, 0, 15);
+            SocketOptions.ReconnectInterval = new TimeSpan(0, 0, 15);
+            SocketOptions.SocketResponseTimeout = new TimeSpan(0, 0, 15);
+            SocketOptions.AutoReconnect = true;
+            
+            this._socketClient = new BinanceSocketClient(SocketOptions
+            );
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -51,9 +60,11 @@ namespace BotApp
             {
                 ApiCredentials = new ApiCredentials(_botConfig.ApiKey, _botConfig.ApiSecret),
                 LogVerbosity = LogVerbosity.Debug
+               
             });
             //var accountInfo = await client.GetAccountInfoAsync(ct: cancellationToken);
             //var streamResult = await _client.StartUserStreamAsync(cancellationToken);
+            
 
             //ListenerKey = streamResult.Data;
 
@@ -123,33 +134,44 @@ namespace BotApp
         {
             try
             {
+                Stopwatch counter = new Stopwatch();
+
                 if (trade.BuyerIsMaker)
                 {
-                    BuyerMatcher.Add(trade);
 
                     Task.Run(() =>
                     {
+                        counter.Start();
+                        BuyerMatcher.Add(trade);
                         TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
+                        var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
+                        counter.Stop();
+                        _logger.LogInformation($"StopWatch Buy Trade : {counter.Elapsed}");
+
+                        _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
+                        _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
 
                     });
 
-                    var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
-                    _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
-                    _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
 
                 }
                 else
                 {
-                    SellerMatcher.Add(trade);
                     Task.Run(() =>
                     {
+                        counter.Start();
+                        SellerMatcher.Add(trade);
                         TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
+                        var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
+                        counter.Stop();
+                        _logger.LogInformation($"StopWatch Seller Trade : {counter.Elapsed}");
+
+                        //_logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
+                        //_logger.LogInformation($"FilledSellerPrice : {trade.Price}");
+
 
                     });
 
-                    var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
-                    _logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
-                    _logger.LogInformation($"FilledSellerPrice : {trade.Price}");
 
                 }
             }
