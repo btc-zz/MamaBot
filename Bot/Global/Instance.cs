@@ -13,6 +13,11 @@ using Bot.Services.Orderbook;
 using Bot;
 using Microsoft.Extensions.Logging;
 using JM.LinqFaster;
+using Binance.Net.Objects.Spot.MarketStream;
+using Binance.Net.Objects.Spot.MarketData;
+using Binance.Net.Objects.Spot.UserStream;
+using Binance.Net.Enums;
+using Binance.Net.Objects.Spot;
 
 namespace BotApp
 {

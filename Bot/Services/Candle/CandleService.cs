@@ -1,5 +1,7 @@
 ﻿using Binance.Net;
+using Binance.Net.Enums;
 using Binance.Net.Objects;
+using Binance.Net.Objects.Spot.MarketData;
 using System;
 using System.Collections.Generic;
 using System.Linq;
