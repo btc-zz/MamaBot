@@ -48,6 +48,7 @@ namespace BotApp
             SocketOptions.SocketNoDataTimeout = new TimeSpan(0, 0, 15);
             SocketOptions.ReconnectInterval = new TimeSpan(0, 0, 15);
             SocketOptions.SocketResponseTimeout = new TimeSpan(0, 0, 15);
+            SocketOptions.LogVerbosity = LogVerbosity.Debug;
             SocketOptions.AutoReconnect = true;
             
             this._socketClient = new BinanceSocketClient(SocketOptions
