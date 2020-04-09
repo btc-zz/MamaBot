@@ -67,6 +67,10 @@ namespace Bot.Channel
             queue.Enqueue(item);
             NewQueueItem(item);
         }
+        public virtual void Clear()
+        {
+            this.queue.Clear();
+        }
         public int Count
         {
             get

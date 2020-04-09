@@ -307,6 +307,8 @@ namespace BotApp
                 BookSnapshot.OrderBookSnap.Clear();
                 SellerMatcher.Clear();
                 BuyerMatcher.Clear();
+                MamaBot.GlobalShared.Vars.Logger.LogInformation(string.Format("Queue item cleared: {0}", MamaBot.GlobalShared.Vars.OrderChannel.Queue.Count));
+                MamaBot.GlobalShared.Vars.OrderChannel.Queue.Clear();
 
             }
         }
