@@ -118,8 +118,8 @@ namespace BotApp
             MamaBot.GlobalShared.Vars.OrderChannel.AddSubscription(TT2);
             await _socketClient.SubscribeToKlineUpdatesAsync(_botConfig.Pair, KlineInterval.OneMinute, KL1Min);
             await _socketClient.SubscribeToTradeUpdatesAsync(_botConfig.Pair, OrderSocketHandler);
-            await _socketClient.SubscribeToSymbolTickerUpdatesAsync(_botConfig.Pair, TT5);
-            await _socketClient.SubscribeToPartialOrderBookUpdatesAsync(_botConfig.Pair, 5, 100, OrderBookHandler);
+            //await _socketClient.SubscribeToSymbolTickerUpdatesAsync(_botConfig.Pair, TT5);
+            //await _socketClient.SubscribeToPartialOrderBookUpdatesAsync(_botConfig.Pair, 5, 100, OrderBookHandler);
             //socketClient.SubscribeToTradeUpdates(_botConfig.Pair, TT7);
             //socketClient.SubscribeToSymbolTickerUpdates(_botConfig.Pair, TT5);
             //socketClient.SubscribeToPartialOrderBookUpdates(_botConfig.Pair, 5, 100, OrderBookHandler);
