@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Bot.Services.Orderbook;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Bot.Channel
 {
@@ -25,15 +27,40 @@ namespace Bot.Channel
 
     public class GenericQueue<T>
     {
-        public string Name { get; set; } = "Generic";
+        public virtual string Name { get; set; } = "Generic";
         public Service ServiceType { get; set; } = Service.Default;
-        public event EventHandler<QueueItemArgs> OnAddHandler;
+        private LinkedList<EventHandler<QueueItemArgs>> eventHandlers = new LinkedList<EventHandler<QueueItemArgs>>();
+
+        public event EventHandler<QueueItemArgs> OnAddHandler
+        {
+            add
+            {
+                
+                eventHandlers.AddLast(value);
+            }
+            remove
+            {
+                eventHandlers.RemoveLast();
+            }
+
+        }
         private readonly Queue<T> queue  = new Queue<T>();
 
         public event EventHandler Enqueued;
         protected virtual void NewQueueItem(T item)
         {
-            Enqueued?.Invoke(this, new QueueItemArgs(item));
+            foreach (EventHandler<QueueItemArgs> handler in eventHandlers)
+            {
+                Task.Run(() =>
+                {
+                    handler?.Invoke(this, new QueueItemArgs(item));
+
+                });
+
+                //handler(this, EventArgs.Empty);
+            }
+
+            //Enqueued?.Invoke(this, new QueueItemArgs(item));
         }
         public virtual void Enqueue(T item)
         {

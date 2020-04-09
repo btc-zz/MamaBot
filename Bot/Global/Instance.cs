@@ -64,15 +64,15 @@ namespace BotApp
             });
             //var accountInfo = await client.GetAccountInfoAsync(ct: cancellationToken);
             //var streamResult = await _client.StartUserStreamAsync(cancellationToken);
-            
+
 
             //ListenerKey = streamResult.Data;
-
             await OrderDataStreamAsync(cancellationToken);
 
             await SubscribeSocketsAsync(cancellationToken);
 
-            TT2.StatisticReady += BookUpdate;
+            //TT2.StatisticReady += BookUpdate;
+
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -115,12 +115,11 @@ namespace BotApp
         public async Task SubscribeSocketsAsync(CancellationToken cancellationToken)
         {
             //socketClient.SubscribeToBookTickerUpdates(_botConfig.Pair, HandleBookOffer);
-
+            MamaBot.GlobalShared.Vars.OrderChannel.AddSubscription(TT2);
             await _socketClient.SubscribeToKlineUpdatesAsync(_botConfig.Pair, KlineInterval.OneMinute, KL1Min);
             await _socketClient.SubscribeToTradeUpdatesAsync(_botConfig.Pair, OrderSocketHandler);
             await _socketClient.SubscribeToSymbolTickerUpdatesAsync(_botConfig.Pair, TT5);
             await _socketClient.SubscribeToPartialOrderBookUpdatesAsync(_botConfig.Pair, 5, 100, OrderBookHandler);
-
             //socketClient.SubscribeToTradeUpdates(_botConfig.Pair, TT7);
             //socketClient.SubscribeToSymbolTickerUpdates(_botConfig.Pair, TT5);
             //socketClient.SubscribeToPartialOrderBookUpdates(_botConfig.Pair, 5, 100, OrderBookHandler);
@@ -134,51 +133,58 @@ namespace BotApp
         {
             try
             {
+
                 Stopwatch counter = new Stopwatch();
-                System.Threading.Thread ComputeThread = new Thread(() => {
-
-                    if (trade.BuyerIsMaker)
-                    {
-
-                        Task.Run(() =>
-                        {
-                            counter.Start();
-                            BuyerMatcher.Add(trade);
-                            TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
-                            var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
-                            counter.Stop();
-                            _logger.LogInformation($"StopWatch Buy Trade : {counter.Elapsed}");
-
-                            _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
-                            _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
-
-                        });
+                counter.Start();
+                MamaBot.GlobalShared.Vars.OrderChannel.Queue.Enqueue(new Order(trade.OrderId, trade.Price, trade.Quantity, trade.BuyerIsMaker ? OrderDirection.Buy : OrderDirection.Sell, trade.TradeTime));
+                counter.Stop();
+                _logger.LogInformation($"StopWatch Queue routing time (including CMPT call) : {counter.Elapsed}");
 
 
-                    }
-                    else
-                    {
-                        Task.Run(() =>
-                        {
-                            counter.Start();
-                            SellerMatcher.Add(trade);
-                            TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
-                            var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
-                            counter.Stop();
-                            _logger.LogInformation($"StopWatch Seller Trade : {counter.Elapsed}");
+                //System.Threading.Thread ComputeThread = new Thread(() => {
 
-                            //_logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
-                            //_logger.LogInformation($"FilledSellerPrice : {trade.Price}");
+                //    if (trade.BuyerIsMaker)
+                //    {
+
+                //        Task.Run(() =>
+                //        {
+                //            counter.Start();
+                //            BuyerMatcher.Add(trade);
+                //            TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Buy, trade.TradeTime));
+                //            var filledBuyerQuantity = BuyerMatcher.SumF(y => y.Quantity);
+                //            counter.Stop();
+                //            _logger.LogInformation($"StopWatch Buy Trade : {counter.Elapsed}");
+
+                //            _logger.LogInformation($"FilledBuyerQuantity : {filledBuyerQuantity}");
+                //            _logger.LogInformation($"FilledBuyerPrice : {trade.Price}");
+
+                //        });
 
 
-                        });
+                //    }
+                //    else
+                //    {
+                //        Task.Run(() =>
+                //        {
+                //            counter.Start();
+                //            SellerMatcher.Add(trade);
+                //            TT2.AddOrder(new Order(trade.OrderId, trade.Price, trade.Quantity, OrderDirection.Sell, trade.TradeTime));
+                //            var filledSellerQuantity = SellerMatcher.SumF(y => y.Quantity);
+                //            counter.Stop();
+                //            _logger.LogInformation($"StopWatch Seller Trade : {counter.Elapsed}");
+
+                //            //_logger.LogInformation($"FilledSellerQuantity : {filledSellerQuantity}");
+                //            //_logger.LogInformation($"FilledSellerPrice : {trade.Price}");
 
 
-                    }
+                //        });
 
-                });
-                ComputeThread.ApartmentState = ApartmentState.MTA;
-                ComputeThread.Start();
+
+                //    }
+
+                //});
+                //ComputeThread.ApartmentState = ApartmentState.MTA;
+                //ComputeThread.Start();
 
 
             }

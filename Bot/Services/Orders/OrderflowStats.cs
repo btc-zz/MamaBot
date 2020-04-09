@@ -63,7 +63,19 @@ namespace Bot.Services.Orderbook
         public int PeriodicAnalysisShort = 30;
 
         public event EventHandler<OrderFlowChange> StatisticReady;
+        public event EventHandler<Channel.QueueItemArgs> OrderChannelData;
 
+        public OrderFlowStatistics()
+        {
+            this.StatisticReady += OrderFlowStatsComputed;
+            this.OrderChannelData += Queue_OnAddHandler;
+        }
+
+        public void Queue_OnAddHandler(object sender, Channel.QueueItemArgs e)
+        {
+            var CastItem = (Order)e.Item;
+            AddOrder(CastItem);
+        }
         /// <summary>
         /// Todo : Add validation here
         /// </summary>
@@ -75,7 +87,7 @@ namespace Bot.Services.Orderbook
                 //Start computation here
                 var test = TestCMPT(selectPrice, 7, 30);
                 var test2 = TestCMPT(selectPrice, 7, 70);
-                MamaBot.GlobalShared.Vars.Logger.LogDebug("message here");
+                MamaBot.GlobalShared.Vars.Logger.LogDebug("Call sent to CMPT");
                 decimal TestCMPT(List<decimal> xList, decimal t, decimal v)
                 {
                     decimal output = 0;
@@ -124,11 +136,8 @@ namespace Bot.Services.Orderbook
 
 
         }
-        public OrderFlowStatistics()
-        {
-            this.StatisticReady += OrderFlowStatsComputed;
 
-        }
+
 
         /// <summary>
         /// Route OrderbookChange event outside class for another operation

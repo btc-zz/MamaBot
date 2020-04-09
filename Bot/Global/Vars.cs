@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Bot.Channel;
+using Bot.Services.Orderbook;
+using Microsoft.Extensions.Logging;
 
 namespace MamaBot.GlobalShared
 {
@@ -10,5 +12,7 @@ namespace MamaBot.GlobalShared
 
         public static Perf ThreadManager = new Perf();
         public static ILogger Logger { get; set; }
+        public static OrderQueue OrderChannel { get; set; } = new OrderQueue();
+        public static OrderFlowStatistics FlowComputeService { get; set; } = new OrderFlowStatistics();
     }
 }
