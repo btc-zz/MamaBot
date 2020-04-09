@@ -33,7 +33,7 @@ namespace BotApp
         public BookSnap BookSnapshot = new BookSnap();
         public PriceMapSnap MapHistory = new PriceMapSnap();
         public PriceMap Map = new PriceMap();
-        public OrderFlowStatistics TT2 = new OrderFlowStatistics();
+        public OrderFlowStatistics OrderFlowAnalyseService = new OrderFlowStatistics();
         public List<BinanceStreamTrade> BuyerMatcher = new List<BinanceStreamTrade>();
         public List<BinanceStreamTrade> SellerMatcher = new List<BinanceStreamTrade>();
         public event EventHandler<OrderFlowChange> BookUpdate;
@@ -48,7 +48,6 @@ namespace BotApp
             SocketOptions.SocketNoDataTimeout = new TimeSpan(0, 0, 15);
             SocketOptions.ReconnectInterval = new TimeSpan(0, 0, 15);
             SocketOptions.SocketResponseTimeout = new TimeSpan(0, 0, 15);
-            SocketOptions.LogVerbosity = LogVerbosity.Debug;
             SocketOptions.AutoReconnect = true;
             
             this._socketClient = new BinanceSocketClient(SocketOptions
@@ -116,7 +115,7 @@ namespace BotApp
         public async Task SubscribeSocketsAsync(CancellationToken cancellationToken)
         {
             //socketClient.SubscribeToBookTickerUpdates(_botConfig.Pair, HandleBookOffer);
-            MamaBot.GlobalShared.Vars.OrderChannel.AddSubscription(TT2);
+            MamaBot.GlobalShared.Vars.OrderChannel.AddSubscription(OrderFlowAnalyseService);
             await _socketClient.SubscribeToKlineUpdatesAsync(_botConfig.Pair, KlineInterval.OneMinute, KL1Min);
             await _socketClient.SubscribeToTradeUpdatesAsync(_botConfig.Pair, OrderSocketHandler);
             //await _socketClient.SubscribeToSymbolTickerUpdatesAsync(_botConfig.Pair, TT5);
@@ -134,13 +133,15 @@ namespace BotApp
         {
             try
             {
+                var startTime = DateTime.UtcNow;
 
                 Stopwatch counter = new Stopwatch();
                 counter.Start();
                 MamaBot.GlobalShared.Vars.OrderChannel.Queue.Enqueue(new Order(trade.OrderId, trade.Price, trade.Quantity, trade.BuyerIsMaker ? OrderDirection.Buy : OrderDirection.Sell, trade.TradeTime));
                 counter.Stop();
-                _logger.LogInformation($"StopWatch Queue routing time (including CMPT call) : {counter.Elapsed}");
+                //_logger.LogInformation($"StopWatch Queue routing time (including CMPT call) : {counter.Elapsed}");
 
+                Debug.WriteLine((DateTime.UtcNow - startTime).TotalMilliseconds + "ms");
 
                 //System.Threading.Thread ComputeThread = new Thread(() => {
 
@@ -308,8 +309,10 @@ namespace BotApp
                 BookSnapshot.OrderBookSnap.Clear();
                 SellerMatcher.Clear();
                 BuyerMatcher.Clear();
-                MamaBot.GlobalShared.Vars.Logger.LogInformation(string.Format("Queue item cleared: {0}", MamaBot.GlobalShared.Vars.OrderChannel.Queue.Count));
+                OrderFlowAnalyseService.Orders.Clear();
                 MamaBot.GlobalShared.Vars.OrderChannel.Queue.Clear();
+                Debug.WriteLine("Cleared all Temporary data");
+
 
             }
         }
