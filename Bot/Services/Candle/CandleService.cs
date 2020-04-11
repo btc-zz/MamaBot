@@ -2,8 +2,10 @@
 using Binance.Net.Enums;
 using Binance.Net.Objects;
 using Binance.Net.Objects.Spot.MarketData;
+using Binance.Net.Objects.Spot.MarketStream;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,10 +31,17 @@ namespace MaMa.HFT.Console
     public class CandleService
     {
         public BinanceClient client { get; set; } = new BinanceClient();
+        public List<Candle> Candles { get; set; } = new List<Candle>();
         public Dictionary<KlineInterval, HistoGram> HistoGramData = new Dictionary<KlineInterval, HistoGram>();
         public string KeyPair { get; set; } = string.Empty;
         public Dictionary<KlineInterval, List<Candle>> RawCandles = new Dictionary<KlineInterval, List<Candle>>();
         public DateTime StartTime { get; set; } = DateTime.Now;
+
+        public CandleService()
+        {
+
+        }
+
         public CandleService(string keypair)
         {
             this.KeyPair = keypair;
@@ -40,6 +49,8 @@ namespace MaMa.HFT.Console
         }
         internal void LoadKLineData()
         {
+            this.RawCandles.Clear();
+
             this.RawCandles.Add(KlineInterval.OneHour, TransformCandle(client.GetKlines(KeyPair, KlineInterval.OneHour, startTime: DateTime.UtcNow.AddHours(-24), endTime: DateTime.UtcNow, limit: 1000).Data));
             this.RawCandles.Add(KlineInterval.FourHour, TransformCandle(client.GetKlines(KeyPair, KlineInterval.FourHour, startTime: DateTime.UtcNow.AddHours(-24), endTime: DateTime.UtcNow, limit: 1000).Data));
             this.RawCandles.Add(KlineInterval.ThirtyMinutes, TransformCandle(client.GetKlines(KeyPair, KlineInterval.ThirtyMinutes, startTime: DateTime.UtcNow.AddHours(-24), endTime: DateTime.UtcNow, limit: 1000).Data));
@@ -68,5 +79,28 @@ namespace MaMa.HFT.Console
             });
             return OutputList;
         }
+
+        public void Queue_OnAddHandler(object sender, Bot.Channel.QueueItemArgs e)
+        {
+            var CastItem = (BinanceStreamTick)e.Item;
+            this.Candles.Add(new Candle(CastItem.CloseTime, CastItem.OpenPrice, CastItem.HighPrice, CastItem.LowPrice, CastItem.LastPrice, CastItem.TotalTradedQuoteAssetVolume));
+            var HistoGram = this.Candles.MacdHist(12, 26, 9)[this.Candles.Count() - 1];
+            var Sma = this.Candles.Sma(7);
+
+            var HasHistoTick = HistoGram.Tick != null;
+            var hasSma7 = Sma.Last().Tick != null;
+
+            if (HasHistoTick)
+            {
+                Debug.WriteLine($"HistoGram Value : {HistoGram.Tick.Value}");
+
+            }
+            if (hasSma7)
+            {
+                Debug.WriteLine($"Sma Value : {Sma.Last().Tick.Value}");
+
+            }
+        }
+
     }
 }

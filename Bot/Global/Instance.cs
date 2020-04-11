@@ -116,9 +116,11 @@ namespace BotApp
         {
             //socketClient.SubscribeToBookTickerUpdates(_botConfig.Pair, HandleBookOffer);
             MamaBot.GlobalShared.Vars.OrderChannel.AddSubscription(OrderFlowAnalyseService);
-            await _socketClient.SubscribeToKlineUpdatesAsync(_botConfig.Pair, KlineInterval.OneMinute, KL1Min);
-            await _socketClient.SubscribeToTradeUpdatesAsync(_botConfig.Pair, OrderSocketHandler);
-            //await _socketClient.SubscribeToSymbolTickerUpdatesAsync(_botConfig.Pair, TT5);
+            MamaBot.GlobalShared.Vars.TickChannel.AddSubscription(MamaBot.GlobalShared.Vars.Candleservice);
+
+            //await _socketClient.SubscribeToKlineUpdatesAsync(_botConfig.Pair, KlineInterval.OneMinute, KL1Min);
+            //await _socketClient.SubscribeToTradeUpdatesAsync(_botConfig.Pair, OrderSocketHandler);
+            await _socketClient.SubscribeToSymbolTickerUpdatesAsync(_botConfig.Pair, PriceTicksHandler);
             //await _socketClient.SubscribeToPartialOrderBookUpdatesAsync(_botConfig.Pair, 5, 100, OrderBookHandler);
             //socketClient.SubscribeToTradeUpdates(_botConfig.Pair, TT7);
             //socketClient.SubscribeToSymbolTickerUpdates(_botConfig.Pair, TT5);
@@ -127,6 +129,7 @@ namespace BotApp
 
         /// <summary>
         /// Method used to receive Order socked
+        /// Todo : Migrate external list from Instance class to Orderflow Stats
         /// </summary>
         /// <param name="Trade"></param>
         private async void OrderSocketHandler(BinanceStreamTrade trade)
@@ -278,22 +281,13 @@ namespace BotApp
 
         }
 
-        private void TT5(BinanceStreamTick obj)
+        private void PriceTicksHandler(BinanceStreamTick obj)
         {
-            var LastPrice = obj.LastPrice;
-            var BidPrice = obj.BidPrice;
-            var AskPrice = obj.AskPrice;
+            var startTime = DateTime.UtcNow;
 
-            //TBD
-            //Logger.Info(string.Format("LastPrice : {0}", LastPrice));
-            //Logger.Info(string.Format("BidPrice : {0}", BidPrice));
-            //Logger.Info(string.Format("AskPrice : {0}", AskPrice));
+            MamaBot.GlobalShared.Vars.TickChannel.Queue.Enqueue(obj);
 
-            //Logger.Info(string.Format("WAP : {0}", obj.WeightedAveragePrice));
-
-            CurrentCumulativeDelta -= obj.AskQuantity;
-
-            CurrentCumulativeDelta += obj.BidQuantity;
+            Debug.WriteLine((DateTime.UtcNow - startTime).TotalMilliseconds + "ms");
 
         }
 
